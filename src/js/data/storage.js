@@ -79,18 +79,11 @@ const StorageService = {
     });
   },
 
-  addReply(letterId, reply) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const letter = await this.getLetterById(letterId);
-        if (!letter) return reject(new Error('信件不存在'));
-        letter.replies.push(reply);
-        await this.saveLetter(letter);
-        resolve(letter);
-      } catch (e) {
-        reject(e);
-      }
-    });
+  async addReply(letterId, reply) {
+    const letter = await this.getLetterById(letterId);
+    if (!letter) throw new Error('信件不存在');
+    letter.replies.push(reply);
+    return this.saveLetter(letter);
   },
 
   // 按位置查询附近信件

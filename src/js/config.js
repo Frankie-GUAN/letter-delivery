@@ -44,7 +44,7 @@ const CONFIG = {
 
   // 同步服务
   SYNC: {
-    SERVER_URL: 'http://localhost:3456',
+    SERVER_URL: '',                      // 同源部署，使用相对路径
     INTERVAL: 30000,              // 同步间隔（ms）
     NOTIFY_INTERVAL: 15000,       // 通知检查间隔（ms）
     NEARBY_RADIUS: 50,            // 服务端搜索半径（米）

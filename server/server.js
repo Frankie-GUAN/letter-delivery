@@ -3,12 +3,21 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
+const http = require('http');
 
 const app = express();
 const PORT = process.env.PORT || 3456;
+const HTTPS_PORT = process.env.HTTPS_PORT || 3457;
+const USE_HTTPS = process.env.HTTPS !== 'false'; // HTTPS=false 可降级
 
 app.use(cors());
 app.use(express.json({ limit: '5mb' }));
+
+// ========== 静态文件服务（前端页面） ==========
+const STATIC_DIR = path.join(__dirname, '..', 'src');
+app.use(express.static(STATIC_DIR));
+console.log(`📂 静态文件: ${STATIC_DIR}`);
 
 // ========== 简易JSON文件数据库 ==========
 
@@ -37,7 +46,6 @@ function writeJSON(filepath, data) {
 
 // ========== 信件API ==========
 
-// 获取附近信件
 app.get('/api/letters/nearby', (req, res) => {
   try {
     const { lat, lng, radius } = req.query;
@@ -47,13 +55,12 @@ app.get('/api/letters/nearby', (req, res) => {
 
     const userLat = parseFloat(lat);
     const userLng = parseFloat(lng);
-    const maxRadius = parseFloat(radius) || 50; // 默认50米（服务端扩大范围）
+    const maxRadius = parseFloat(radius) || 50;
 
     const letters = readJSON(LETTERS_FILE);
     const now = Date.now();
 
     const nearby = letters.filter(l => {
-      // 过滤未到期的时光胶囊
       if (l.type === 'self_capsule' && l.capsule && now < l.capsule.unlockAt) {
         return false;
       }
@@ -61,7 +68,6 @@ app.get('/api/letters/nearby', (req, res) => {
       return d <= maxRadius;
     });
 
-    // 按距离排序
     nearby.sort((a, b) => {
       const dA = haversine(userLat, userLng, a.location.lat, a.location.lng);
       const dB = haversine(userLat, userLng, b.location.lat, b.location.lng);
@@ -75,7 +81,6 @@ app.get('/api/letters/nearby', (req, res) => {
   }
 });
 
-// 获取单封信
 app.get('/api/letters/:id', (req, res) => {
   try {
     const letters = readJSON(LETTERS_FILE);
@@ -87,7 +92,6 @@ app.get('/api/letters/:id', (req, res) => {
   }
 });
 
-// 创建/更新信件
 app.post('/api/letters', (req, res) => {
   try {
     const { letter } = req.body;
@@ -99,7 +103,6 @@ app.post('/api/letters', (req, res) => {
     const idx = letters.findIndex(l => l.id === letter.id);
 
     if (idx >= 0) {
-      // 更新已有信件（合并回响和浏览量）
       const existing = letters[idx];
       letter.replies = mergeReplies(existing.replies || [], letter.replies || []);
       letter.views = Math.max(existing.views || 0, letter.views || 0);
@@ -129,7 +132,6 @@ app.post('/api/letters', (req, res) => {
   }
 });
 
-// 添加回响
 app.post('/api/letters/:id/reply', (req, res) => {
   try {
     const { reply } = req.body;
@@ -151,13 +153,11 @@ app.post('/api/letters/:id/reply', (req, res) => {
   }
 });
 
-// 双向同步
 app.post('/api/sync', (req, res) => {
   try {
     const { localLetters, lastSync } = req.body;
     const serverLetters = readJSON(LETTERS_FILE);
 
-    // 上传本地新信件到服务器
     if (localLetters && localLetters.length > 0) {
       const allLetters = readJSON(LETTERS_FILE);
       localLetters.forEach(local => {
@@ -173,7 +173,6 @@ app.post('/api/sync', (req, res) => {
       writeJSON(LETTERS_FILE, allLetters);
     }
 
-    // 下载服务器上新信件
     const syncTimestamp = lastSync || 0;
     const newLetters = serverLetters.filter(l => l.created > syncTimestamp);
 
@@ -188,7 +187,6 @@ app.post('/api/sync', (req, res) => {
   }
 });
 
-// 密信口令解析
 app.post('/api/secret/resolve', (req, res) => {
   try {
     const { passphrase } = req.body;
@@ -216,7 +214,6 @@ app.post('/api/secret/resolve', (req, res) => {
 
 // ========== 通知API ==========
 
-// 注册通知订阅
 app.post('/api/notifications/register', (req, res) => {
   try {
     const { nickname, deviceToken } = req.body;
@@ -239,7 +236,6 @@ app.post('/api/notifications/register', (req, res) => {
   }
 });
 
-// 轮询检查通知
 app.get('/api/notifications/check', (req, res) => {
   try {
     const { nickname, lat, lng } = req.query;
@@ -250,7 +246,6 @@ app.get('/api/notifications/check', (req, res) => {
     const now = Date.now();
     const events = [];
 
-    // 1. 检查附近的密信（发给该用户的）
     const nearbySecrets = letters.filter(l =>
       l.type === 'secret' &&
       l.secret &&
@@ -273,7 +268,6 @@ app.get('/api/notifications/check', (req, res) => {
       });
     }
 
-    // 2. 时光胶囊到期通知
     const dueCapsules = letters.filter(l =>
       l.type === 'self_capsule' &&
       l.capsule &&
@@ -291,7 +285,6 @@ app.get('/api/notifications/check', (req, res) => {
       });
     });
 
-    // 3. 共埋胶囊全部打开通知
     const coBuried = letters.filter(l =>
       l.type === 'self_capsule' &&
       l.capsule &&
@@ -313,6 +306,14 @@ app.get('/api/notifications/check', (req, res) => {
     console.error('通知检查失败:', e);
     res.status(500).json({ error: '服务器错误' });
   }
+});
+
+// SPA fallback — 所有非API请求返回index.html
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: '接口不存在' });
+  }
+  res.sendFile(path.join(STATIC_DIR, 'index.html'));
 });
 
 // ========== 工具函数 ==========
@@ -337,9 +338,46 @@ function mergeReplies(existing, incoming) {
 // ========== 启动 ==========
 
 ensureDataDir();
-app.listen(PORT, () => {
-  console.log(`📮 此刻·此地 同步服务已启动 → http://localhost:${PORT}`);
-  console.log(`   信件API:    GET/POST /api/letters`);
-  console.log(`   同步API:    POST /api/sync`);
-  console.log(`   通知API:    GET  /api/notifications/check`);
-});
+
+if (USE_HTTPS) {
+  const certPath = path.join(__dirname, 'cert.crt');
+  const keyPath = path.join(__dirname, 'cert.key');
+
+  if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+    const httpsOpts = {
+      cert: fs.readFileSync(certPath),
+      key: fs.readFileSync(keyPath),
+    };
+
+    https.createServer(httpsOpts, app).listen(HTTPS_PORT, () => {
+      console.log(`📮 此刻·此地 HTTPS 服务已启动 → https://localhost:${HTTPS_PORT}`);
+      console.log(`   信件API:    GET/POST /api/letters`);
+      console.log(`   同步API:    POST /api/sync`);
+      console.log(`   通知API:    GET  /api/notifications/check`);
+    });
+
+    // 同时启动 HTTP 重定向
+    http.createServer((req, res) => {
+      const host = req.headers.host?.replace(/:\d+$/, '') || 'localhost';
+      res.writeHead(301, { Location: `https://${host}:${HTTPS_PORT}${req.url}` });
+      res.end();
+    }).listen(PORT, () => {
+      console.log(`   重定向:     http://localhost:${PORT} → https://localhost:${HTTPS_PORT}`);
+    });
+  } else {
+    console.warn('SSL证书未找到，降级为HTTP模式');
+    console.warn('运行 node server.js 前请先执行: openssl req -x509 -newkey rsa:2048 -keyout cert.key -out cert.crt -days 365 -nodes -subj "//CN=cikecidi-local" -addext "subjectAltName=IP:<你的IP>"');
+    startHTTP();
+  }
+} else {
+  startHTTP();
+}
+
+function startHTTP() {
+  app.listen(PORT, () => {
+    console.log(`📮 此刻·此地 HTTP 服务已启动 → http://localhost:${PORT}`);
+    console.log(`   信件API:    GET/POST /api/letters`);
+    console.log(`   同步API:    POST /api/sync`);
+    console.log(`   通知API:    GET  /api/notifications/check`);
+  });
+}

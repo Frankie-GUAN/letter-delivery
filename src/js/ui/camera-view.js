@@ -155,14 +155,43 @@ const CameraView = {
 
     const arLayer = document.getElementById('camera-ar-layer');
     const noLetterHint = document.getElementById('camera-no-letter-hint');
+    const bar = document.getElementById('camera-alignment-bar');
 
+    // 距离分层
     if (d > CONFIG.LOCATION.FAR_RANGE) {
-      if (arLayer) arLayer.innerHTML = '';
+      // >20m：不显示信封，仅提示太远
+      if (arLayer) {
+        arLayer.innerHTML = `
+          <div class="ar-distance-hint">
+            <div class="ar-far-icon">📡</div>
+            <div class="ar-far-text">距离目标约 ${Math.round(d)}m</div>
+            <div class="ar-far-sub">再走近一些，信封就会出现</div>
+          </div>
+        `;
+      }
+      if (bar) bar.style.display = 'none';
       if (noLetterHint) noLetterHint.style.display = 'none';
       return;
     }
 
-    // 在范围内，进行特征比对
+    if (d > CONFIG.LOCATION.NEARBY_RANGE) {
+      // 10-20m：小光点方向指示
+      if (arLayer) {
+        arLayer.innerHTML = `
+          <div class="ar-distance-hint nearby">
+            <div class="ar-nearby-dot"></div>
+            <div class="ar-nearby-text">约 ${Math.round(d)}m · 正在接近...</div>
+          </div>
+        `;
+      }
+      if (bar) bar.style.display = 'none';
+      if (noLetterHint) noLetterHint.style.display = 'none';
+      return;
+    }
+
+    // <10m：进入对齐模式
+    if (noLetterHint) noLetterHint.style.display = 'none';
+
     if (this._targetLetter.photo.hasAlignment && this._targetLetter.photo.features.length > 0) {
       const score = FeatureEngine.computeAlignment(
         this._targetLetter.photo.features,
@@ -171,14 +200,12 @@ const CameraView = {
       this._currentAlignment = FeatureEngine.scoreToPercent(score);
       this._updateAlignmentUI(this._currentAlignment);
       this._updateARLayer(this._currentAlignment);
+      if (bar) bar.style.display = 'block';
     } else {
       this._currentAlignment = 100;
       this._updateARLayer(100);
-      const bar = document.getElementById('camera-alignment-bar');
       if (bar) bar.style.display = 'none';
     }
-
-    if (noLetterHint) noLetterHint.style.display = 'none';
   },
 
   _updateAlignmentUI(percent) {
@@ -198,20 +225,62 @@ const CameraView = {
     const arLayer = document.getElementById('camera-ar-layer');
     if (!arLayer || !this._targetLetter) return;
 
-    const opacity = percent / 100;
-    const blurAmount = Math.max(0, (1 - opacity) * 10);
-    const scale = 0.6 + opacity * 0.4;
+    const letter = this._targetLetter;
+    const tier = percent < 30 ? 1 : percent < 60 ? 2 : percent < 90 ? 3 : 4;
 
-    arLayer.innerHTML = `
-      <div class="ar-envelope ${percent >= 90 ? 'unlocked' : ''}"
-           style="opacity: ${opacity}; filter: blur(${blurAmount}px); transform: scale(${scale});">
-        <div class="ar-envelope-icon">${this._targetLetter.sender.avatar || '✉️'}</div>
-        <div class="ar-envelope-sender">${Helpers.escapeHtml(this._targetLetter.sender.nickname)}</div>
-        ${percent >= 90 ? `
-          <button class="ar-open-btn" id="btn-open-letter">💌 打开这封信</button>
-        ` : ''}
-      </div>
-    `;
+    // 信封基础样式
+    const opacity = 0.2 + (percent / 100) * 0.8;
+    const scale = 0.5 + (percent / 100) * 0.5;
+
+    let content = '';
+
+    if (tier === 1) {
+      // 0-30%: 虚线轮廓 + 光晕闪烁
+      content = `
+        <div class="ar-envelope tier-1" style="opacity: ${opacity}; transform: scale(${scale});">
+          <div class="ar-ghost-outline"></div>
+          <div class="ar-ghost-glow"></div>
+          <div class="ar-ghost-label">✉️ 附近有一封信</div>
+        </div>
+      `;
+    } else if (tier === 2) {
+      // 30-60%: 轮廓清晰 + 浮现头像 + 标题模糊可见
+      content = `
+        <div class="ar-envelope tier-2" style="opacity: ${opacity}; transform: scale(${scale});">
+          <div class="ar-env-icon">${letter.sender.avatar || '✉️'}</div>
+          <div class="ar-env-sender">${Helpers.escapeHtml(letter.sender.nickname)}</div>
+          <div class="ar-env-title-faint">${Helpers.escapeHtml(letter.content.title || '...')}</div>
+        </div>
+      `;
+    } else if (tier === 3) {
+      // 60-90%: 信纸徐徐展开，文字逐渐可辨
+      content = `
+        <div class="ar-envelope tier-3" style="opacity: ${opacity}; transform: scale(${scale});">
+          <div class="ar-paper-unfolding">
+            <div class="ar-paper-crest">${letter.sender.avatar || '✉️'}</div>
+            <div class="ar-paper-sender">${Helpers.escapeHtml(letter.sender.nickname)}</div>
+            <div class="ar-paper-title">${Helpers.escapeHtml(letter.content.title || '无名信')}</div>
+            <div class="ar-paper-tease">${Helpers.escapeHtml((letter.content.body || '').slice(0, 40))}...</div>
+          </div>
+        </div>
+      `;
+    } else {
+      // 90-100%: 完全清晰 + 照片浮现 + 可打开
+      content = `
+        <div class="ar-envelope tier-4 unlocked" style="opacity: ${opacity}; transform: scale(${scale});">
+          <div class="ar-unlocked-card">
+            ${letter.photo.thumbnail ? `<img src="${letter.photo.thumbnail}" class="ar-card-photo" alt="">` : ''}
+            <div class="ar-card-icon">${letter.sender.avatar || '✉️'}</div>
+            <div class="ar-card-sender">${Helpers.escapeHtml(letter.sender.nickname)}</div>
+            <div class="ar-card-title">${Helpers.escapeHtml(letter.content.title || '无名信')}</div>
+            <div class="ar-card-mood">${letter.content.mood ? '情绪：' + letter.content.mood : ''}</div>
+            <button class="ar-open-btn" id="btn-open-letter">💌 打开这封信</button>
+          </div>
+        </div>
+      `;
+    }
+
+    arLayer.innerHTML = content;
 
     const openBtn = arLayer.querySelector('#btn-open-letter');
     if (openBtn) {
@@ -223,13 +292,71 @@ const CameraView = {
 
   _openLetter() {
     this._stopSampleLoop();
-    this._stopCamera();
-    App.navigateTo('read', { letterId: this._targetLetter.id });
+
+    // 信封翻开动画
+    const arLayer = document.getElementById('camera-ar-layer');
+    if (arLayer) {
+      arLayer.innerHTML = `
+        <div class="ar-open-anim">
+          <div class="ar-open-flash"></div>
+          <div class="ar-open-letter-icon">💌</div>
+        </div>
+      `;
+    }
+
+    // 短暂过渡后跳转
+    setTimeout(() => {
+      this._stopCamera();
+      App.navigateTo('read', { letterId: this._targetLetter.id });
+    }, 600);
+  },
+
+  _playShutterSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const now = ctx.currentTime;
+
+      // 快门声：短促白噪声 + 低频叩击
+      const bufferSize = ctx.sampleRate * 0.08; // 80ms
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        const t = i / bufferSize;
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 30) * 0.3;
+      }
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 2000;
+      filter.Q.value = 0.5;
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.5, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      noise.start(now);
+      noise.stop(now + 0.08);
+
+      // 振动反馈
+      if (navigator.vibrate) {
+        navigator.vibrate(30);
+      }
+    } catch (e) {
+      // 静默失败，不影响拍照
+    }
   },
 
   async _captureAndCompose() {
     if (!this._video) return;
     try {
+      this._playShutterSound();
+
       const canvas = Helpers.scaleImageToCanvas(
         this._video,
         Math.min(this._video.videoWidth, CONFIG.CAMERA.PHOTO_MAX_WIDTH),

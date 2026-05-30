@@ -6,8 +6,19 @@ const LocationService = {
 
   // 开始监听位置
   start() {
+    // 恢复上次已知位置
+    const cached = localStorage.getItem('cikecidi_last_position');
+    if (cached) {
+      try {
+        const saved = JSON.parse(cached);
+        this._current = saved;
+        // 通知监听者有缓存位置可用
+        setTimeout(() => this._notifyListeners(), 100);
+      } catch (e) { /* ignore */ }
+    }
+
     if (!navigator.geolocation) {
-      console.warn('Geolocation API 不可用');
+      console.warn('Geolocation API 不可用，使用缓存位置');
       return;
     }
 
@@ -19,10 +30,17 @@ const LocationService = {
           accuracy: pos.coords.accuracy,
           timestamp: pos.timestamp,
         };
+        // 缓存位置
+        localStorage.setItem('cikecidi_last_position', JSON.stringify(this._current));
         this._notifyListeners();
       },
       (err) => {
-        console.warn('定位失败:', err.message);
+        console.warn('定位失败:', err.message, '(使用缓存位置)');
+        // GPS失败时仍然通知，让地图用缓存位置显示
+        if (this._current && !this._notifiedCached) {
+          this._notifiedCached = true;
+          this._notifyListeners();
+        }
       },
       {
         enableHighAccuracy: true,
@@ -40,9 +58,26 @@ const LocationService = {
     }
   },
 
-  // 获取上次已知位置
+  // 模拟定位（Demo/桌面调试用）
+  _simulated: null,
+
+  setSimulatedPosition(lat, lng) {
+    this._simulated = { lat, lng, accuracy: 5, timestamp: Date.now() };
+    this._notifyListeners();
+  },
+
+  clearSimulatedPosition() {
+    this._simulated = null;
+    if (this._current) this._notifyListeners();
+  },
+
+  isSimulated() {
+    return !!this._simulated;
+  },
+
+  // 获取上次已知位置（模拟优先）
   getCurrent() {
-    return this._current;
+    return this._simulated || this._current;
   },
 
   // 位置是否有效（未过期）

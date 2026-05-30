@@ -7,3 +7,5 @@ Thumbs.db
 dist/
 *.zip
 api-key.js
+server/cert.crt
+server/cert.key

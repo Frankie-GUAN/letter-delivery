@@ -237,7 +237,7 @@ const LetterComposer = {
       }
 
       if (letter.type === 'secret') {
-        alert(`密信创建成功！口令：${letter.secret.passphrase}\n\n请将口令分享给收信人。`);
+        this._sharePassphrase(letter.secret.passphrase, letter.content.title, recipients);
       }
 
       App.navigateTo('map');
@@ -254,5 +254,31 @@ const LetterComposer = {
       img.onerror = () => reject(new Error('图片加载失败'));
       img.src = dataURL;
     });
+  },
+
+  async _sharePassphrase(passphrase, title, recipients) {
+    const text = `🔒 我在「此刻·此地」给你留了一封密信\n📮 「${title}」\n🔑 口令：${passphrase}\n\n打开作品，输入口令即可找到这封信`;
+
+    // 尝试 Web Share API
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: '此刻·此地 — 一封密信',
+          text,
+        });
+        return;
+      } catch (e) {
+        // 用户取消分享，继续展示口令
+      }
+    }
+
+    // 降级：复制到剪贴板
+    try {
+      await navigator.clipboard.writeText(text);
+      alert(`密信创建成功！口令「${passphrase}」已复制到剪贴板，分享给收信人吧~`);
+    } catch (e) {
+      // 最终降级
+      alert(`密信创建成功！\n口令：${passphrase}\n\n请将口令分享给收信人。`);
+    }
   },
 };

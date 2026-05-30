@@ -143,17 +143,30 @@ const LetterComposer = {
     document.getElementById('public-options').style.display = this._currentType === 'public' ? 'block' : 'none';
   },
 
-  _applyAIPolish() {
+  async _applyAIPolish() {
     const bodyEl = document.getElementById('composer-body');
     const inputText = bodyEl.value.trim();
     if (!inputText) {
       alert('先写点什么吧，我来帮你润色~');
       return;
     }
-    const polished = LEditorTemplates.wrap(inputText, this._currentMood);
-    bodyEl.value = polished;
-    const countEl = document.getElementById('composer-char-count');
-    countEl.textContent = `${polished.length}/${CONFIG.LETTER.MAX_BODY_LENGTH}`;
+
+    const btn = document.getElementById('btn-ai-polish');
+    btn.textContent = '✨ 润色中...';
+    btn.disabled = true;
+
+    try {
+      const polished = await AIPolishService.polishWithFallback(inputText, this._currentMood);
+      bodyEl.value = polished;
+      const countEl = document.getElementById('composer-char-count');
+      countEl.textContent = `${polished.length}/${CONFIG.LETTER.MAX_BODY_LENGTH}`;
+    } catch (e) {
+      console.warn('润色失败:', e);
+      alert('润色失败，请重试');
+    } finally {
+      btn.textContent = '✨ AI润色';
+      btn.disabled = false;
+    }
   },
 
   async _sendLetter() {

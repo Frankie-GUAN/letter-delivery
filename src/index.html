@@ -20,8 +20,7 @@
         <div id="wall-container">
             <!-- 三个模块入口层 -->
             <div id="wall-public" class="wall-layer active">
-                <div class="wall-surface"></div>
-                <div class="wall-letters"></div>
+                <canvas id="wall-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;"></canvas>
             </div>
             <div id="wall-drawer" class="wall-layer">
                 <div class="drawer-interior"></div>
@@ -53,10 +52,30 @@
         </div>
     </div>
 
+    <!-- 项目配置（内联JSON，无网络请求） -->
+    <script type="application/json" id="project-config">
+    {
+        "name": "未曾寄出的信",
+        "name_en": "Unsent Letters",
+        "version": "1.0.0",
+        "gameplay_type": "情感互动 / 轻量交互",
+        "gameplay_details": "在旧墙上发现陌生人匿名留下的信，读后留下无声回响（石头/叶子/灯/蒲公英/水滴）。也可自己写信，选择藏身方式（信箱/门缝/窗台/暖气管/墙缝）和信纸（笔记本纸/小票背面/餐巾纸/日历页/烧过的纸），投入墙面。时光信功能可将信绑定到真实地点和时间，好友需到场拍照才能解锁。",
+        "interaction_mode": "点击（发现信件、阅读、投递回响）+ 滑动（浏览墙面）+ 输入（写信正文与署名）+ 拍照（时光信创建与解锁）",
+        "visual_style": "旧物手写质感 — 暖灰砖墙背景、做旧信封、5种手写信纸纹理、褪色墨水色系、回响物件符号（🪨🍃💡🪽💧）",
+        "screen_orientation": "竖屏",
+        "tech_stack": "HTML5 Canvas + CSS + Vanilla JS（无框架）",
+        "storage": "localStorage",
+        "package_size": "~121KB 源码（远低于8MB限制）",
+        "offline": true,
+        "competition": "抖音AI创变者大赛 · 赛道一 · 互动空间"
+    }
+    </script>
+
     <script src="./js/shared/storage.js"></script>
     <script src="./js/shared/camera.js"></script>
     <script src="./js/shared/letter.js"></script>
     <script src="./js/shared/wall.js"></script>
+    <script src="./js/shared/canvas-renderer.js"></script>
     <script src="./js/modules/public-wall/public-wall.js"></script>
     <script src="./js/modules/private-drawer/private-drawer.js"></script>
     <script src="./js/modules/time-letter/time-letter.js"></script>

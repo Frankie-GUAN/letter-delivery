@@ -55,8 +55,8 @@
     var $navDrawer   = document.getElementById('nav-drawer');
     var $navTimeletter = document.getElementById('nav-timeletter');
 
-    // 墙的信封/内容容器
-    var $wallLetters    = $wallPublic?.querySelector('.wall-letters');
+    // 墙的Canvas/容器
+    var $wallCanvas     = document.getElementById('wall-canvas');
     var $drawerInterior = $wallDrawer?.querySelector('.drawer-interior');
     var $timeboardSurface = document.getElementById('wall-timeboard')?.querySelector('.timeboard-surface');
 
@@ -70,7 +70,7 @@
 
             // 初始化各模块
             if (typeof PublicWall !== 'undefined') {
-                PublicWall.init($wallLetters, $modalContent, $modalOverlay);
+                PublicWall.init($wallCanvas, $modalContent, $modalOverlay);
             }
             if (typeof PrivateDrawer !== 'undefined') {
                 PrivateDrawer.init($drawerInterior, $modalContent, $modalOverlay);

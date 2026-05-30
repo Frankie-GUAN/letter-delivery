@@ -15,12 +15,12 @@ const PublicWall = (() => {
         draftTimer: null
     };
 
-    let $wallLetters = null;
+    let $wallCanvas = null;
     let $modalContent = null;
     let $modalOverlay = null;
 
     // 署名占位符轮换
-    const SIGNATURE_PLACEHOLDERS = [
+    var SIGNATURE_PLACEHOLDERS = [
         '一个也在等雨停的人',
         '某个周二下午的自己',
         '你对面那栋楼的住户',
@@ -30,12 +30,27 @@ const PublicWall = (() => {
         '正在等红灯的人'
     ];
 
-    function init(wallLettersEl, modalContentEl, modalOverlayEl) {
-        $wallLetters = wallLettersEl;
+    function init(wallCanvasEl, modalContentEl, modalOverlayEl) {
+        $wallCanvas = wallCanvasEl;
         $modalContent = modalContentEl;
         $modalOverlay = modalOverlayEl;
+
+        // 初始化 Canvas 渲染器
+        if (typeof CanvasRenderer !== 'undefined') {
+            CanvasRenderer.init($wallCanvas);
+
+            // Canvas 点击 → 信封检测
+            $wallCanvas.addEventListener('click', function(e) {
+                var rect = $wallCanvas.getBoundingClientRect();
+                var mx = e.clientX - rect.left;
+                var my = e.clientY - rect.top;
+                var letter = CanvasRenderer.hitTest(mx, my);
+                if (letter) handleLetterClick(letter);
+            });
+        }
+
         loadLetters();
-        console.log('[PublicWall] 初始化完成，共', state.letters.length, '封信');
+        console.log('[PublicWall] Canvas 初始化完成，共', state.letters.length, '封信');
     }
 
     function loadLetters() {
@@ -52,10 +67,12 @@ const PublicWall = (() => {
     }
 
     function show() {
-        if (!$wallLetters) return;
+        if (!$wallCanvas) return;
         loadLetters();
+        if (typeof CanvasRenderer !== 'undefined') {
+            CanvasRenderer.resize();
+        }
         renderWall();
-        applyTimeAmbience();
     }
 
     function hide() {
@@ -65,104 +82,35 @@ const PublicWall = (() => {
         }
     }
 
-    // ========== 墙渲染 ==========
+    // ========== 墙渲染 (Canvas) ==========
 
     function renderWall() {
+        if (typeof CanvasRenderer === 'undefined') return;
+
         if (state.letters.length === 0) {
-            $wallLetters.innerHTML = `
-                <div class="wall-empty-state fade-in" style="
-                    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                    text-align: center; color: var(--color-ink-faded);
-                    z-index: 2; width: 80%; max-width: 320px;
-                ">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📮</div>
-                    <p style="font-size: 15px; line-height: 1.8; margin-bottom: 8px;">墙上还没有信。</p>
-                    <p style="font-size: 13px; opacity: 0.7;">你想成为第一个留下什么的人吗？</p>
-                </div>
-            `;
+            // 空白墙：Canvas 上绘制引导文字
+            var canvas = $wallCanvas;
+            var ctx = canvas.getContext('2d');
+            var w = canvas.width / (window.devicePixelRatio || 1);
+            var h = canvas.height / (window.devicePixelRatio || 1);
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = '#c8baa5';
+            ctx.fillRect(0, 0, w, h);
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.font = '16px "KaiTi","STKaiti",serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('📮', w/2, h/2 - 30);
+            ctx.fillText('墙上还没有信。', w/2, h/2 + 10);
+            ctx.font = '12px "KaiTi","STKaiti",serif';
+            ctx.fillText('你想成为第一个留下什么的人吗？', w/2, h/2 + 36);
             return;
         }
 
-        $wallLetters.innerHTML = '';
+        var timeState = typeof WallEngine !== 'undefined'
+            ? WallEngine.getCurrentTimeState()
+            : { hue: 40, sat: 12, light: 85, name: '正午', desc: '阳光直射墙面' };
 
-        // 计算位置：按藏身方式分组
-        const positions = calculatePositions(state.letters);
-
-        state.letters.forEach((letter, i) => {
-            const pos = positions[i];
-            const envelope = createEnvelope(letter, pos);
-            envelope.addEventListener('click', function(e) {
-                e.stopPropagation();
-                handleLetterClick(letter);
-            });
-            $wallLetters.appendChild(envelope);
-        });
-    }
-
-    function calculatePositions(letters) {
-        const positions = [];
-        const slotGroups = {};
-
-        letters.forEach((l, i) => {
-            const slot = l.slot || 'mailbox';
-            if (!slotGroups[slot]) slotGroups[slot] = [];
-            slotGroups[slot].push(i);
-        });
-
-        const slotBases = {
-            'mailbox':    { x: 12, y: 8,  spread: 18, tilt: 3 },
-            'door-gap':   { x: 52, y: 4,  spread: 14, tilt: 2 },
-            'window':     { x: 30, y: 15, spread: 22, tilt: 5 },
-            'pipe':       { x: 58, y: 20, spread: 20, tilt: 4 },
-            'wall-crack': { x: 35, y: 35, spread: 25, tilt: 6 }
-        };
-
-        for (const [slot, indices] of Object.entries(slotGroups)) {
-            const base = slotBases[slot] || slotBases['mailbox'];
-            indices.forEach((letterIdx, j) => {
-                positions[letterIdx] = {
-                    x: base.x + (j % 3) * base.spread + (Math.random() - 0.5) * 8,
-                    y: base.y + Math.floor(j / 3) * 25 + (Math.random() - 0.5) * 6,
-                    rotate: (Math.random() - 0.5) * base.tilt * 2
-                };
-            });
-        }
-
-        return positions;
-    }
-
-    function createEnvelope(letter, pos) {
-        const el = document.createElement('div');
-        el.className = 'letter-envelope';
-        el.style.left = pos.x + '%';
-        el.style.top = pos.y + '%';
-        el.style.transform = 'rotate(' + pos.rotate + 'deg)';
-        el.dataset.letterId = letter.id;
-
-        // 不同藏身方式的视觉差异
-        const slotStyles = {
-            'mailbox':    'slot-mailbox',
-            'door-gap':   'slot-door',
-            'window':     'slot-window',
-            'pipe':       'slot-pipe',
-            'wall-crack': 'slot-crack'
-        };
-
-        const slotClass = slotStyles[letter.slot] || 'slot-mailbox';
-        const preview = letter.content.substring(0, 35).replace(/\n/g, ' ');
-
-        el.innerHTML = `
-            <div class="envelope-body ${slotClass}">
-                <div class="envelope-flap"></div>
-                <div class="envelope-texture"></div>
-                <div class="envelope-preview">
-                    <span class="envelope-first-line">${LetterComponent.escapeHtml(preview)}…</span>
-                </div>
-                <div class="envelope-crease"></div>
-            </div>
-        `;
-
-        return el;
+        CanvasRenderer.drawWall(state.letters, timeState);
     }
 
     // ========== 时间氛围 ==========

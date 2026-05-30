@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <title>未曾寄出的信</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div id="app">
+        <!-- 墙的容器 -->
+        <div id="wall-container">
+            <!-- 三个模块入口层 -->
+            <div id="wall-public" class="wall-layer active">
+                <div class="wall-surface"></div>
+                <div class="wall-letters"></div>
+            </div>
+            <div id="wall-drawer" class="wall-layer">
+                <div class="drawer-interior"></div>
+            </div>
+            <div id="wall-timeboard" class="wall-layer">
+                <div class="timeboard-surface"></div>
+            </div>
+        </div>
+
+        <!-- 导航 -->
+        <nav id="nav-bar">
+            <button id="nav-public" class="nav-btn active" data-target="wall-public">
+                <span class="nav-icon">📮</span>
+                <span class="nav-label">公共墙</span>
+            </button>
+            <button id="nav-drawer" class="nav-btn" data-target="wall-drawer">
+                <span class="nav-icon">🗄️</span>
+                <span class="nav-label">我的抽屉</span>
+            </button>
+        </nav>
+
+        <!-- 模态层 -->
+        <div id="modal-overlay" class="hidden">
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <script src="js/shared/storage.js"></script>
+    <script src="js/shared/camera.js"></script>
+    <script src="js/shared/letter.js"></script>
+    <script src="js/shared/wall.js"></script>
+    <script src="js/modules/public-wall/public-wall.js"></script>
+    <script src="js/modules/private-drawer/private-drawer.js"></script>
+    <script src="js/modules/time-letter/time-letter.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

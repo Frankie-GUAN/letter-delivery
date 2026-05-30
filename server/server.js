@@ -3,21 +3,14 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
-const http = require('http');
 
 const app = express();
-const PORT = process.env.PORT || 3456;
-const HTTPS_PORT = process.env.HTTPS_PORT || 3457;
-const USE_HTTPS = process.env.HTTPS !== 'false'; // HTTPS=false 可降级
 
 app.use(cors());
 app.use(express.json({ limit: '5mb' }));
 
-// ========== 静态文件服务（前端页面） ==========
+// 静态文件由 Nginx 提供，Node.js 仅处理 API
 const STATIC_DIR = path.join(__dirname, '..', 'src');
-app.use(express.static(STATIC_DIR));
-console.log(`📂 静态文件: ${STATIC_DIR}`);
 
 // ========== 简易JSON文件数据库 ==========
 
@@ -308,12 +301,16 @@ app.get('/api/notifications/check', (req, res) => {
   }
 });
 
-// SPA fallback — 所有非API请求返回index.html
-app.get('*', (req, res) => {
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: '接口不存在' });
+// CA证书下载（手机安装用）
+app.get('/ca', (req, res) => {
+  const caPath = path.join(__dirname, 'rootCA.pem');
+  if (fs.existsSync(caPath)) {
+    res.setHeader('Content-Type', 'application/x-pem-file');
+    res.setHeader('Content-Disposition', 'attachment; filename="cikecidi-ca.pem"');
+    res.sendFile(caPath);
+  } else {
+    res.status(404).send('CA cert not found');
   }
-  res.sendFile(path.join(STATIC_DIR, 'index.html'));
 });
 
 // ========== 工具函数 ==========
@@ -337,47 +334,15 @@ function mergeReplies(existing, incoming) {
 
 // ========== 启动 ==========
 
+const API_PORT = process.env.API_PORT || 3000;
+
 ensureDataDir();
 
-if (USE_HTTPS) {
-  const certPath = path.join(__dirname, 'cert.crt');
-  const keyPath = path.join(__dirname, 'cert.key');
-
-  if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
-    const httpsOpts = {
-      cert: fs.readFileSync(certPath),
-      key: fs.readFileSync(keyPath),
-    };
-
-    https.createServer(httpsOpts, app).listen(HTTPS_PORT, () => {
-      console.log(`📮 此刻·此地 HTTPS 服务已启动 → https://localhost:${HTTPS_PORT}`);
-      console.log(`   信件API:    GET/POST /api/letters`);
-      console.log(`   同步API:    POST /api/sync`);
-      console.log(`   通知API:    GET  /api/notifications/check`);
-    });
-
-    // 同时启动 HTTP 重定向
-    http.createServer((req, res) => {
-      const host = req.headers.host?.replace(/:\d+$/, '') || 'localhost';
-      res.writeHead(301, { Location: `https://${host}:${HTTPS_PORT}${req.url}` });
-      res.end();
-    }).listen(PORT, () => {
-      console.log(`   重定向:     http://localhost:${PORT} → https://localhost:${HTTPS_PORT}`);
-    });
-  } else {
-    console.warn('SSL证书未找到，降级为HTTP模式');
-    console.warn('运行 node server.js 前请先执行: openssl req -x509 -newkey rsa:2048 -keyout cert.key -out cert.crt -days 365 -nodes -subj "//CN=cikecidi-local" -addext "subjectAltName=IP:<你的IP>"');
-    startHTTP();
-  }
-} else {
-  startHTTP();
-}
-
-function startHTTP() {
-  app.listen(PORT, () => {
-    console.log(`📮 此刻·此地 HTTP 服务已启动 → http://localhost:${PORT}`);
-    console.log(`   信件API:    GET/POST /api/letters`);
-    console.log(`   同步API:    POST /api/sync`);
-    console.log(`   通知API:    GET  /api/notifications/check`);
-  });
-}
+// 仅监听 127.0.0.1，由 Nginx 反向代理对外
+app.listen(API_PORT, '127.0.0.1', () => {
+  console.log(`📮 此刻·此地 API 服务已启动 → http://127.0.0.1:${API_PORT}`);
+  console.log(`   Nginx HTTPS 代理 → https://<你的IP>:3457`);
+  console.log(`   信件API:  GET/POST /api/letters`);
+  console.log(`   同步API:  POST /api/sync`);
+  console.log(`   通知API:  GET  /api/notifications/check`);
+});

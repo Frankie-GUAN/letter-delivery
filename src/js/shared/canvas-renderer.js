@@ -112,6 +112,7 @@ const CanvasRenderer = (() => {
         drawBrickWall(w, h);
         drawMortarLines(w, h);
         drawWearAndStains(w, h);
+        drawWallArtifacts(w, h);
         drawLightBeam(w, h);
         drawDust();
         drawVignette(w, h);
@@ -213,6 +214,56 @@ const CanvasRenderer = (() => {
         }
     }
 
+    function drawWallArtifacts(w, h) {
+        // 旧海报与胶带
+        drawPoster(w * 0.08, h * 0.58, 96, 128, -2.2);
+        drawPoster(w * 0.70, h * 0.28, 84, 112, 2.4);
+
+        // 轻微粉笔划痕
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(w * 0.22, h * 0.18);
+        ctx.lineTo(w * 0.34, h * 0.20);
+        ctx.lineTo(w * 0.31, h * 0.24);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawPoster(x, y, pw, ph, rotate) {
+        ctx.save();
+        ctx.translate(x + pw / 2, y + ph / 2);
+        ctx.rotate(rotate * Math.PI / 180);
+        ctx.translate(-pw / 2, -ph / 2);
+
+        var grad = ctx.createLinearGradient(0, 0, pw, ph);
+        grad.addColorStop(0, 'rgba(250,245,235,0.7)');
+        grad.addColorStop(0.5, 'rgba(242,233,220,0.75)');
+        grad.addColorStop(1, 'rgba(232,220,200,0.7)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, pw, ph);
+
+        ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0.5, 0.5, pw - 1, ph - 1);
+
+        // 纸张撕裂边
+        ctx.strokeStyle = 'rgba(0,0,0,0.05)';
+        ctx.beginPath();
+        ctx.moveTo(0, ph * 0.18);
+        ctx.quadraticCurveTo(pw * 0.3, ph * 0.22, pw * 0.55, ph * 0.12);
+        ctx.quadraticCurveTo(pw * 0.72, ph * 0.05, pw, ph * 0.14);
+        ctx.stroke();
+
+        // 胶带
+        ctx.fillStyle = 'rgba(220,210,180,0.55)';
+        ctx.fillRect(pw * 0.1, -6, pw * 0.22, 12);
+        ctx.fillRect(pw * 0.68, ph - 6, pw * 0.22, 12);
+
+        ctx.restore();
+    }
+
     // ========== 光束 ==========
 
     function drawLightBeam(w, h) {
@@ -275,41 +326,41 @@ const CanvasRenderer = (() => {
     // ========== 信封绘制 ==========
 
     function drawEnvelopes(letters, w, h) {
-        var slotAnchors = {
-            'mailbox':    { baseX: 0.08, baseY: 0.06, cols: 3, spreadX: 0.13, spreadY: 0.2 },
-            'door-gap':   { baseX: 0.48, baseY: 0.03, cols: 2, spreadX: 0.11, spreadY: 0.19 },
-            'window':     { baseX: 0.22, baseY: 0.10, cols: 3, spreadX: 0.16, spreadY: 0.22 },
-            'pipe':       { baseX: 0.56, baseY: 0.18, cols: 2, spreadX: 0.15, spreadY: 0.21 },
-            'wall-crack': { baseX: 0.30, baseY: 0.33, cols: 3, spreadX: 0.20, spreadY: 0.26 }
-        };
+        var cols = w > 520 ? 4 : 3;
+        var rows = Math.max(1, Math.ceil(letters.length / cols));
+        var padX = 18;
+        var padY = 16;
+        var areaW = w - padX * 2;
+        var areaH = h - padY * 2;
+        var cellW = areaW / cols;
+        var cellH = areaH / rows;
 
-        var groups = {};
-        letters.forEach(function(l) {
-            var s = l.slot || 'mailbox';
-            if (!groups[s]) groups[s] = [];
-            groups[s].push(l);
-        });
+        var envW = Math.min(112, cellW * 0.78);
+        envW = Math.max(64, envW);
+        if (envW > cellW * 0.9) envW = cellW * 0.9;
 
-        var envW = 106, envH = 64;
-
-        for (var slot in groups) {
-            var anchor = slotAnchors[slot] || slotAnchors['mailbox'];
-            var list = groups[slot];
-
-            list.forEach(function(letter, i) {
-                var col = i % anchor.cols;
-                var row = Math.floor(i / anchor.cols);
-                var x = w * anchor.baseX + col * w * anchor.spreadX + (Math.random() - 0.5) * 14;
-                var y = h * anchor.baseY + row * h * anchor.spreadY + (Math.random() - 0.5) * 10;
-                var rot = (Math.random() - 0.5) * 7;
-
-                x = Math.max(6, Math.min(w - envW - 6, x));
-                y = Math.max(6, Math.min(h - envH - 6, y));
-
-                drawSingleEnvelope(x, y, envW, envH, rot, letter);
-                envelopes.push({ id: letter.id, x: x, y: y, w: envW, h: envH, rotate: rot, letter: letter });
-            });
+        var envH = envW * 0.6;
+        if (envH > cellH * 0.7) {
+            envH = cellH * 0.7;
+            envW = envH / 0.6;
         }
+        envH = Math.max(40, envH);
+
+        letters.forEach(function(letter, i) {
+            var row = Math.floor(i / cols);
+            var col = i % cols;
+            var jitterX = (Math.random() - 0.5) * cellW * 0.22;
+            var jitterY = (Math.random() - 0.5) * cellH * 0.18;
+            var x = padX + col * cellW + (cellW - envW) / 2 + jitterX;
+            var y = padY + row * cellH + (cellH - envH) / 2 + jitterY;
+            var rot = (Math.random() - 0.5) * 6;
+
+            x = Math.max(6, Math.min(w - envW - 6, x));
+            y = Math.max(6, Math.min(h - envH - 6, y));
+
+            drawSingleEnvelope(x, y, envW, envH, rot, letter);
+            envelopes.push({ id: letter.id, x: x, y: y, w: envW, h: envH, rotate: rot, letter: letter });
+        });
     }
 
     function drawSingleEnvelope(x, y, w, h, rotate, letter) {
@@ -366,13 +417,29 @@ const CanvasRenderer = (() => {
         ctx.lineTo(x + w * 0.9, y + 2);
         ctx.stroke();
 
-        // 正文预览文字
+        // 标题预览文字
+        var title = '';
+        if (typeof LetterComponent !== 'undefined' && LetterComponent.getTitle) {
+            title = LetterComponent.getTitle(letter);
+        } else {
+            title = (letter.title || letter.content || '').toString().trim();
+        }
+        var preview = title.replace(/\s+/g, ' ').trim();
+        var isTruncated = false;
+        if (preview.length > 10) {
+            preview = preview.slice(0, 10);
+            isTruncated = true;
+        }
+
+        ctx.save();
+        roundRectPath(x + 6, y + 16, w - 12, h - 24, 2);
+        ctx.clip();
         ctx.fillStyle = 'rgba(50,40,30,0.45)';
         ctx.font = '9px "KaiTi","STKaiti","楷体",serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        var preview = letter.content.substring(0, 16).replace(/\n/g, ' ');
-        ctx.fillText(preview + '…', cx, cy + 8);
+        ctx.fillText(preview + (isTruncated ? '...' : ''), cx, cy + 8);
+        ctx.restore();
 
         // 中间折痕
         ctx.strokeStyle = 'rgba(0,0,0,0.05)';

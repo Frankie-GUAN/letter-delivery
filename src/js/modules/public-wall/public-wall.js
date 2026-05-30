@@ -55,15 +55,28 @@ const PublicWall = (() => {
 
     function loadLetters() {
         let stored = Storage.getLetters();
-        if (stored.length === 0 && typeof PresetLetters !== 'undefined') {
+        const publicLetters = stored.filter(function(l) { return l.type === 'public'; });
+        if (publicLetters.length === 0 && typeof PresetLetters !== 'undefined') {
             PresetLetters.ALL.forEach(l => {
-                l.id = generateId();
-                l.type = 'public';
-                Storage.saveLetter(l);
+                var seeded = Object.assign({}, l, {
+                    id: generateId(),
+                    type: 'public',
+                    source: 'preset',
+                    title: buildTitle(l.content),
+                    createdAt: Date.now() - Math.floor(Math.random() * 1000 * 60 * 60 * 24 * 30)
+                });
+                Storage.saveLetter(seeded);
             });
             stored = Storage.getLetters();
         }
-        state.letters = stored.filter(l => l.type === 'public');
+
+        state.letters = stored
+            .filter(function(l) { return l.type === 'public'; })
+            .map(function(l) {
+                if (!l.title) l.title = buildTitle(l.content || '');
+                if (!l.source && l.sentiment) l.source = 'preset';
+                return l;
+            });
     }
 
     function show() {
@@ -233,6 +246,10 @@ const PublicWall = (() => {
                     </div>
                 </div>
 
+                <div class="write-title-row">
+                    <input id="write-title" placeholder="标题（可选）" maxlength="18">
+                </div>
+
                 <div class="write-textarea-wrapper" id="write-textarea-wrapper">
                     <textarea id="write-textarea"
                         placeholder="你想说的话…"
@@ -290,6 +307,8 @@ const PublicWall = (() => {
         // 寄出
         document.getElementById('write-send-btn').addEventListener('click', function() {
             var content = textarea.value.trim();
+            var titleInput = document.getElementById('write-title');
+            var title = titleInput ? titleInput.value.trim() : '';
             var signature = document.getElementById('write-signature').value.trim() ||
                 getRandomPlaceholder();
 
@@ -298,9 +317,17 @@ const PublicWall = (() => {
                 return;
             }
 
+            if (!title) {
+                title = buildTitle(content);
+            } else {
+                title = normalizeTitle(title);
+            }
+
             var letter = {
                 id: generateId(),
                 type: 'public',
+                source: 'user',
+                title: title,
                 content: content,
                 paperType: state.writing.paper,
                 slot: state.writing.slot,
@@ -347,6 +374,7 @@ const PublicWall = (() => {
                 if (!duplicate) {
                     Storage.saveDraft({
                         id: 'D_' + Date.now(),
+                        title: normalizeTitle(document.getElementById('write-title')?.value || ''),
                         content: content,
                         paperType: state.writing.paper,
                         slot: state.writing.slot,
@@ -365,6 +393,7 @@ const PublicWall = (() => {
         if (content.length > 5) {
             Storage.saveDraft({
                 id: 'D_' + Date.now(),
+                title: normalizeTitle(document.getElementById('write-title')?.value || ''),
                 content: content,
                 paperType: state.writing.paper,
                 slot: state.writing.slot,
@@ -423,6 +452,18 @@ const PublicWall = (() => {
 
     function getRandomPlaceholder() {
         return SIGNATURE_PLACEHOLDERS[Math.floor(Math.random() * SIGNATURE_PLACEHOLDERS.length)];
+    }
+
+    function normalizeTitle(title) {
+        if (!title) return '';
+        return title.replace(/\s+/g, ' ').trim().slice(0, 18);
+    }
+
+    function buildTitle(content) {
+        if (!content) return '';
+        var lines = content.split(/\n+/).map(function(l) { return l.trim(); }).filter(Boolean);
+        var base = lines[0] || content.trim();
+        return normalizeTitle(base);
     }
 
     function closeModal() {

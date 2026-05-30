@@ -33,7 +33,9 @@ const PrivateDrawer = (() => {
 
     function loadData() {
         state.myLetters = Storage.getLetters()
-            .filter(function(l) { return l.type === 'public' || l.type === 'private'; })
+            .filter(function(l) {
+                return (l.type === 'public' || l.type === 'private') && !isPresetLetter(l);
+            })
             .sort(function(a, b) { return b.createdAt - a.createdAt; });
 
         state.drafts = Storage.getDrafts()
@@ -42,11 +44,12 @@ const PrivateDrawer = (() => {
 
     function render() {
         var html = '';
+        var sentCount = state.myLetters.length;
 
         // ===== 统计面板 =====
         var stats = Storage.getUserStats();
         html += '<div class="drawer-stats">';
-        html += '<span class="stat-item">✉️ 寄出 <strong>' + stats.lettersSent + '</strong> 封</span>';
+        html += '<span class="stat-item">✉️ 寄出 <strong>' + sentCount + '</strong> 封</span>';
         html += '<span class="stat-item">💫 送出 <strong>' + stats.echoesGiven + '</strong> 个回响</span>';
         html += '<span class="stat-item">📌 埋下 <strong>' + stats.timeLettersCreated + '</strong> 封时光信</span>';
         html += '</div>';
@@ -183,8 +186,10 @@ const PrivateDrawer = (() => {
         setTimeout(function() {
             var textarea = document.getElementById('write-textarea');
             var sigInput = document.getElementById('write-signature');
+            var titleInput = document.getElementById('write-title');
             if (textarea) textarea.value = draft.content || '';
             if (sigInput) sigInput.value = draft.signature || '';
+            if (titleInput) titleInput.value = draft.title || '';
 
             // 选对信纸
             if (draft.paperType) {
@@ -221,6 +226,13 @@ const PrivateDrawer = (() => {
     function closeModal() {
         $modalOverlay.classList.add('hidden');
         $modalContent.innerHTML = '';
+    }
+
+    function isPresetLetter(letter) {
+        if (!letter) return false;
+        if (letter.source === 'preset') return true;
+        if (letter.isPreset) return true;
+        return !!letter.sentiment && letter.type === 'public';
     }
 
     return {

@@ -201,20 +201,7 @@
             `;
         }
 
-        // 角落的描述文字
-        let timeNote = document.getElementById('time-note');
-        if (!timeNote) {
-            timeNote = document.createElement('div');
-            timeNote.id = 'time-note';
-            timeNote.style.cssText = `
-                position: fixed;
-                top: 12px; right: 16px;
-                font-size: 10px; color: rgba(255,255,255,0.4);
-                z-index: 10; pointer-events: none;
-            `;
-            document.body.appendChild(timeNote);
-        }
-        timeNote.textContent = timeState.desc;
+        // 不再显示全局时间描述，避免影响阅读
     }
 
     // 定时刷新时间状态

@@ -51,13 +51,15 @@ const LetterComponent = (() => {
         const el = document.createElement('div');
         el.className = `letter-envelope ${SLOT_CONFIG[letter.slot]?.css || ''}`;
         el.dataset.letterId = letter.id;
+        const title = getTitle(letter);
+        const preview = buildPreview(title || letter.content || '', 12);
 
         // 信封外观：颜色/形状因藏身方式而异
         el.innerHTML = `
             <div class="envelope-body">
                 <div class="envelope-flap"></div>
                 <div class="envelope-preview">
-                    <span class="envelope-first-line">${letter.content.substring(0, 30)}...</span>
+                    <span class="envelope-first-line">${escapeHtml(preview.text)}${preview.truncated ? '...' : ''}</span>
                 </div>
             </div>
         `;
@@ -75,8 +77,12 @@ const LetterComponent = (() => {
     function renderContent(letter, echoes = null) {
         const paperClass = PAPER_CSS[letter.paperType] || '';
         const slotLabel = SLOT_CONFIG[letter.slot]?.label || '';
+        const title = getTitle(letter);
 
         let html = `<div class="letter-paper ${paperClass}">`;
+        if (title) {
+            html += `<div class="letter-title">${escapeHtml(title)}</div>`;
+        }
         html += `<div class="letter-content">${escapeHtml(letter.content)}</div>`;
         html += `<div class="letter-signature">—— ${escapeHtml(letter.signature || '')}</div>`;
 
@@ -145,6 +151,26 @@ const LetterComponent = (() => {
         return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
 
+    function getTitle(letter) {
+        if (!letter) return '';
+        const title = (letter.title || '').toString().trim();
+        if (title) return title;
+        const content = (letter.content || '').toString().trim();
+        if (!content) return '';
+        const firstLine = content.split(/\n+/).map(l => l.trim()).find(Boolean) || content;
+        return firstLine.replace(/\s+/g, ' ').trim().slice(0, 18);
+    }
+
+    function buildPreview(text, limit) {
+        const raw = (text || '').toString().trim();
+        if (!raw) return { text: '', truncated: false };
+        const clean = raw.replace(/\s+/g, ' ').trim();
+        if (clean.length > limit) {
+            return { text: clean.slice(0, limit), truncated: true };
+        }
+        return { text: clean, truncated: false };
+    }
+
     function pad(n) { return String(n).padStart(2, '0'); }
 
     return {
@@ -155,6 +181,7 @@ const LetterComponent = (() => {
         renderContent,
         renderEchoPicker,
         escapeHtml,
-        formatDate
+        formatDate,
+        getTitle
     };
 })();

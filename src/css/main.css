@@ -273,6 +273,14 @@ html, body {
     );
 }
 
+.letter-title {
+    font-family: var(--font-hand);
+    font-size: 16px;
+    color: var(--ink);
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+}
+
 .letter-signature {
     text-align: right;
     margin-top: 16px;
@@ -501,6 +509,24 @@ html, body {
 }
 
 .write-signature-row { margin: 10px 0; }
+.write-title-row { margin: 10px 0; }
+.write-title-row input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid rgba(0,0,0,0.08);
+    background: var(--paper);
+    font-family: var(--font-hand);
+    font-size: 14px;
+    border-radius: var(--r-paper);
+    outline: none;
+    color: var(--ink);
+    letter-spacing: 0.03em;
+}
+.write-title-row input::placeholder {
+    color: var(--ink-light);
+    font-style: italic;
+    opacity: 0.6;
+}
 .write-signature-row input {
     width: 100%;
     padding: 10px 14px;

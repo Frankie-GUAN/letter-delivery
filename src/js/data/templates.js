@@ -1,0 +1,135 @@
+// 此刻·此地 — AI润色降级模板库（Demo版离线使用）
+const LEditorTemplates = {
+  moods: ['温柔', '俏皮', '深情', '怀念', '期待', '感谢'],
+
+  templates: {
+    '温柔': {
+      openings: [
+        '轻轻放下这些字，像放下了一片叶子。',
+        '风很轻，话也很轻。',
+        '在这个角落，想说些柔软的话。',
+      ],
+      bodies: [
+        '每次经过这里，都想起{feeling}。那些细小的瞬间，像光斑一样落在记忆里，暖的。',
+        '今天的{weather}让人安静下来。我在想，有些话不用大声说，只要写了，就算寄到了。',
+      ],
+      closings: [
+        '愿你被温柔接住。',
+        '像阳光一样，轻轻落在你肩上。',
+        '这里有我留下的一片温柔，路过的人，也请轻拿轻放。',
+      ],
+    },
+    '俏皮': {
+      openings: [
+        '嘿嘿，被我藏在这里了吧！',
+        '叮！你发现了一个彩蛋。',
+        '警告：前方有可爱出没。',
+      ],
+      bodies: [
+        '我在{place}蹲了好久才决定把信放在这里的！如果你能看到，说明我们有缘——快去买张彩票！',
+        '别问我为什么在这里留信，问就是{reason}。对了，你也在这里留一封的话，我们就扯平了。',
+      ],
+      closings: [
+        '找到的人，今天会有好运（认真的）。',
+        '记得笑一个，你的笑容值一个亿。',
+        '友情提示：此处适合自拍一张。',
+      ],
+    },
+    '深情': {
+      openings: [
+        '这里是我想你的坐标。',
+        '有些话，只适合留在这里。',
+        '我把思念埋在这个位置了。',
+      ],
+      bodies: [
+        '他们说{place}的{time_of_day}最美，我来的时候只想一件事：如果你也在就好了。',
+        '时间走得好快，但在这里，此刻，我想停一下，认认真真地想一遍你。',
+      ],
+      closings: [
+        '如果你看到了，那就是我想你的信号，穿越了距离。',
+        '这封信没有寄出的日期，因为思念没有有效期。',
+      ],
+    },
+    '怀念': {
+      openings: [
+        '故地重游，物是人非。',
+        '有些地方，来了就不想走了。',
+        '时光在这里打了个结。',
+      ],
+      bodies: [
+        '记得上次来这里是{time_ago}。那时候{memory}，现在只剩下风还在吹。',
+        '{place}还和以前一样，不一样的只是站在这里的人，和那些回不去的事了。',
+      ],
+      closings: [
+        '给过去的自己，也给来过这里的你。',
+        '时光会走远，但有些东西不会。',
+        '下一个来这里的人，如果你也有想念的事，在这里留一行字吧。',
+      ],
+    },
+    '期待': {
+      openings: [
+        '给未来的自己，你还好吗？',
+        '这是我从{place}发出的信号，给以后的我。',
+        '你好，未来。',
+      ],
+      bodies: [
+        '现在的我正站在{place}，想着{goal}。不知道打开这封信的时候，这一切实现了吗？如果实现了，恭喜你；如果还没有，没关系，我还在努力。',
+        '给{time_later}后的自己：我希望你变成了一个{adjective}的人。不管你变成了什么样，我都为你骄傲。',
+      ],
+      closings: [
+        '未来见。',
+        '当你打开的时候，记得微笑——那是过去的你送给现在的你的礼物。',
+        '别怕，往前走。',
+      ],
+    },
+    '感谢': {
+      openings: [
+        '在此地，说一声谢谢。',
+        '这个地方让我想起你。',
+        '有些感谢，要写下来才算数。',
+      ],
+      bodies: [
+        '谢谢你{reason}。很多事情当时觉得理所当然，后来才知道，都是因为有人在默默付出。',
+        '来{place}的时候，突然想起了你。不是刻意的，就是风吹过来的时候，觉得应该跟你说声谢谢。',
+      ],
+      closings: [
+        '谢谢是你，路过我的生命。',
+        '感谢的话不用太长，但一定要真诚。以上，句句真心。',
+      ],
+    },
+  },
+
+  generate(inputText, mood = '温柔') {
+    const t = this.templates[mood] || this.templates['温柔'];
+    const opening = t.openings[Math.floor(Math.random() * t.openings.length)];
+    const body = t.bodies[Math.floor(Math.random() * t.bodies.length)];
+    const closing = t.closings[Math.floor(Math.random() * t.closings.length)];
+
+    const vars = {
+      feeling: inputText || '那一刻的感觉',
+      weather: ['晴天', '雨天', '阴天', '起风了'][Math.floor(Math.random() * 4)],
+      place: '这里',
+      reason: '缘分',
+      time_of_day: ['黄昏', '清晨', '午后', '傍晚'][Math.floor(Math.random() * 4)],
+      time_ago: '很久以前',
+      memory: '那些日子',
+      goal: '那些梦想',
+      time_later: '一年',
+      adjective: '更好',
+    };
+
+    let result = `${opening}\n\n${body}\n\n${closing}`;
+    Object.keys(vars).forEach(key => {
+      result = result.replace(`{${key}}`, vars[key]);
+    });
+
+    return result;
+  },
+
+  wrap(inputText, mood = '温柔') {
+    const t = this.templates[mood] || this.templates['温柔'];
+    const opening = t.openings[Math.floor(Math.random() * t.openings.length)];
+    const closing = t.closings[Math.floor(Math.random() * t.closings.length)];
+    return `${opening}\n\n${inputText}\n\n${closing}`;
+  },
+};

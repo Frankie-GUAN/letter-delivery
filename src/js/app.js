@@ -18,52 +18,84 @@
 (function() {
     'use strict';
 
-    // DOM 元素
-    const $wallPublic   = document.getElementById('wall-public');
-    const $wallDrawer   = document.getElementById('wall-drawer');
-    const $modalContent = document.getElementById('modal-content');
-    const $modalOverlay = document.getElementById('modal-overlay');
+    // ========== 全局错误处理 ==========
 
-    const $navPublic   = document.getElementById('nav-public');
-    const $navDrawer   = document.getElementById('nav-drawer');
+    function showErrorScreen() {
+        var $error = document.getElementById('error-screen');
+        if ($error) {
+            $error.style.display = 'flex';
+        }
+        // 隐藏正常 UI
+        var $app = document.getElementById('app');
+        if ($app) {
+            $app.style.display = 'none';
+        }
+    }
+
+    // 捕获未处理的异常
+    window.addEventListener('error', function(e) {
+        console.error('[App] 全局异常:', e.error || e.message);
+        try { showErrorScreen(); } catch (_) {}
+    });
+
+    // 捕获 Promise 异常
+    window.addEventListener('unhandledrejection', function(e) {
+        console.error('[App] 未处理的Promise异常:', e.reason);
+        try { showErrorScreen(); } catch (_) {}
+    });
+
+    // ========== DOM 元素 ==========
+
+    var $wallPublic   = document.getElementById('wall-public');
+    var $wallDrawer   = document.getElementById('wall-drawer');
+    var $modalContent = document.getElementById('modal-content');
+    var $modalOverlay = document.getElementById('modal-overlay');
+
+    var $navPublic   = document.getElementById('nav-public');
+    var $navDrawer   = document.getElementById('nav-drawer');
 
     // 墙的信封/内容容器
-    const $wallLetters    = $wallPublic?.querySelector('.wall-letters');
-    const $drawerInterior = $wallDrawer?.querySelector('.drawer-interior');
-    const $timeboardSurface = document.getElementById('wall-timeboard')?.querySelector('.timeboard-surface');
+    var $wallLetters    = $wallPublic?.querySelector('.wall-letters');
+    var $drawerInterior = $wallDrawer?.querySelector('.drawer-interior');
+    var $timeboardSurface = document.getElementById('wall-timeboard')?.querySelector('.timeboard-surface');
 
-    let currentLayer = 'wall-public';
+    var currentLayer = 'wall-public';
 
     // ========== 初始化 ==========
 
     function init() {
-        console.log('[App] 未曾寄出的信 — 正在打开...');
+        try {
+            console.log('[App] 未曾寄出的信 — 正在打开...');
 
-        // 初始化各模块
-        if (typeof PublicWall !== 'undefined') {
-            PublicWall.init($wallLetters, $modalContent, $modalOverlay);
+            // 初始化各模块
+            if (typeof PublicWall !== 'undefined') {
+                PublicWall.init($wallLetters, $modalContent, $modalOverlay);
+            }
+            if (typeof PrivateDrawer !== 'undefined') {
+                PrivateDrawer.init($drawerInterior, $modalContent, $modalOverlay);
+            }
+            if (typeof TimeLetter !== 'undefined') {
+                TimeLetter.init($timeboardSurface, $modalContent, $modalOverlay);
+            }
+
+            // 绑定导航
+            if ($navPublic) $navPublic.addEventListener('click', function() { switchLayer('wall-public'); });
+            if ($navDrawer) $navDrawer.addEventListener('click', function() { switchLayer('wall-drawer'); });
+
+            // 全局写信按钮
+            setupWriteButton();
+
+            // 默认显示公共墙
+            switchLayer('wall-public');
+
+            // 应用墙的时间状态
+            applyTimeState();
+
+            console.log('[App] 就绪。');
+        } catch (e) {
+            console.error('[App] 初始化失败:', e);
+            showErrorScreen();
         }
-        if (typeof PrivateDrawer !== 'undefined') {
-            PrivateDrawer.init($drawerInterior, $modalContent, $modalOverlay);
-        }
-        if (typeof TimeLetter !== 'undefined') {
-            TimeLetter.init($timeboardSurface, $modalContent, $modalOverlay);
-        }
-
-        // 绑定导航
-        $navPublic?.addEventListener('click', () => switchLayer('wall-public'));
-        $navDrawer?.addEventListener('click', () => switchLayer('wall-drawer'));
-
-        // 全局写信按钮（可放在公共墙上）
-        setupWriteButton();
-
-        // 默认显示公共墙
-        switchLayer('wall-public');
-
-        // 应用墙的时间状态
-        applyTimeState();
-
-        console.log('[App] 就绪。');
     }
 
     // ========== 页面切换 ==========

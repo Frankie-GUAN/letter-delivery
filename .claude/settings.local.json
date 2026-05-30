@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(node *)",
+      "Bash(npm install *)",
+      "Bash(curl -s http://localhost:3456/api/letters/nearby?lat=0\\\\&lng=0\\\\&radius=1)",
+      "Bash(curl -s -X POST http://localhost:3456/api/letters -H 'Content-Type: application/json' -d '{\"letter\":{\"id\":\"test-001\",\"type\":\"public\",\"location\":{\"lat\":39.9042,\"lng\":116.4074,\"name\":\"测试地点\",\"radius\":20},\"photo\":{\"dataURL\":\"\",\"thumbnail\":\"\",\"features\":[],\"hasAlignment\":true},\"content\":{\"title\":\"测试公开信\",\"body\":\"这是一封测试信\",\"mood\":\"温柔\"},\"sender\":{\"nickname\":\"测试用户\",\"avatar\":\"🌲\"},\"created\":1717056000000,\"capsule\":null,\"secret\":null,\"replies\":[],\"views\":0}}')",
+      "Bash(curl -s -X POST http://localhost:3456/api/letters -H 'Content-Type: application/json' -d '{\"letter\":{\"id\":\"test-002\",\"type\":\"self_capsule\",\"location\":{\"lat\":39.9050,\"lng\":116.4080,\"name\":\"公园长椅\",\"radius\":20},\"photo\":{\"dataURL\":\"\",\"thumbnail\":\"\",\"features\":[],\"hasAlignment\":true},\"content\":{\"title\":\"给一年后的我\",\"body\":\"你好未来的我\",\"mood\":\"期待\"},\"sender\":{\"nickname\":\"测试用户\",\"avatar\":\"🌲\"},\"created\":1717056100000,\"capsule\":{\"unlockAt\":1700000000000,\"coBuryWith\":[\"好友A\"],\"allOpened\":false,\"openedBy\":[]},\"secret\":null,\"replies\":[],\"views\":0}}')",
+      "Bash(curl -s -X POST http://localhost:3456/api/letters -H 'Content-Type: application/json' -d '{\"letter\":{\"id\":\"test-003\",\"type\":\"secret\",\"location\":{\"lat\":39.9060,\"lng\":116.4090,\"name\":\"秘密角落\",\"radius\":20},\"photo\":{\"dataURL\":\"\",\"thumbnail\":\"hint-thumb\",\"features\":[],\"hasAlignment\":false},\"content\":{\"title\":\"给你的密信\",\"body\":\"只有你能看到\",\"mood\":\"深情\"},\"sender\":{\"nickname\":\"发信人\",\"avatar\":\"🌙\"},\"created\":1717056200000,\"capsule\":null,\"secret\":{\"passphrase\":\"abc12345\",\"recipients\":[\"收信人昵称\"],\"hintPhoto\":\"hint-thumb\",\"openedBy\":[]},\"replies\":[],\"views\":0}}')",
+      "Bash(curl -s \"http://localhost:3456/api/letters/nearby?lat=39.9045&lng=116.4075&radius=500\")",
+      "Bash(curl -s http://localhost:3456/api/letters/test-001)",
+      "Bash(ipconfig)",
+      "Bash(openssl version *)",
+      "Bash(openssl req *)",
+      "Bash(curl -k -s \"https://localhost:3457/api/letters/nearby?lat=0&lng=0&radius=1\")",
+      "Bash(curl -k -s \"https://localhost:3457/\")",
+      "Bash(pkill -f \"node server.js\")",
+      "Bash(curl -k -s \"https://localhost:3457/api/letters/nearby?lat=23.0&lng=113.0&radius=100\")",
+      "Bash(curl -k -s -o /dev/null -w \"HTTP %{http_code}\" \"https://localhost:3457/\")",
+      "Bash(netstat -ano)",
+      "Bash(tasklist)",
+      "Bash(findstr node *)",
+      "Bash(taskkill //F //PID 27452)",
+      "Read(//tmp/**)",
+      "Bash(curl -k -s -o /dev/null -w \"Static: HTTP %{http_code}\\\\n\" \"https://localhost:3457/\")",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(curl -k -s -o /dev/null -w \"Home: HTTP %{http_code}\\\\n\" \"https://localhost:3457/\")"
+    ]
+  }
+}

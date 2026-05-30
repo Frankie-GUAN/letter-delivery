@@ -1,213 +1,190 @@
-/**
- * 主应用入口 (Application Entry)
- *
- * 负责人：框架搭建者
- *
- * 职责：
- *   1. 页面初始化
- *   2. 模块加载与路由切换
- *   3. 全局事件调度（导航栏、写信按钮、模态层关闭）
- *   4. 墙的时间状态管理
- *
- * 三条导航：
- *   - 公共墙 (nav-public)     → PublicWall
- *   - 我的抽屉 (nav-drawer)   → PrivateDrawer
- *   - 公告栏在公共墙或我的抽屉内部显示时光信入口
- */
+// 此刻·此地 — 主路由与初始化
+const App = {
+  _currentView: null,
+  _previousView: null,
+  _viewParams: null,
 
-(function() {
-    'use strict';
+  views: {
+    home: HomeView,
+    map: MapView,
+    camera: CameraView,
+    compose: LetterComposer,
+    read: LetterReader,
+    collection: CollectionView,
+    discover: DiscoverView,
+    onboarding: OnboardingView,
+  },
 
-    // ========== 全局错误处理 ==========
+  async init() {
+    try {
+      await StorageService.init();
+      LocationService.start();
 
-    function showErrorScreen() {
-        var $error = document.getElementById('error-screen');
-        if ($error) {
-            $error.style.display = 'flex';
-        }
-        // 隐藏正常 UI
-        var $app = document.getElementById('app');
-        if ($app) {
-            $app.style.display = 'none';
-        }
+      // 首次使用：使用入门引导
+      const settings = StorageService.getUserSettings();
+      if (!settings.nickname) {
+        this.navigateTo('onboarding');
+        return;
+      }
+
+      this._startApp();
+    } catch (e) {
+      console.error('初始化失败:', e);
+      Helpers.showError();
+    }
+  },
+
+  async _startApp() {
+    // 尝试连接后端同步服务
+    const isOnline = await ApiService.checkConnection();
+    if (isOnline) {
+      SyncService.start();
+      SyncService.requestNotificationPermission();
+
+      // 注册当前用户
+      const settings = StorageService.getUserSettings();
+      if (settings.nickname) {
+        ApiService.registerNotification(settings.nickname);
+      }
     }
 
-    // 捕获未处理的异常
-    window.addEventListener('error', function(e) {
-        console.error('[App] 全局异常:', e.error || e.message);
-        try { showErrorScreen(); } catch (_) {}
+    // 检查本地到期时光胶囊
+    this._checkLocalCapsules();
+
+    this.navigateTo('home');
+  },
+
+  async _checkLocalCapsules() {
+    try {
+      const all = await StorageService.getAllLetters();
+      const now = Date.now();
+      const settings = StorageService.getUserSettings();
+      const nickname = settings.nickname;
+
+      const dueCapsules = all.filter(l =>
+        l.type === 'self_capsule' &&
+        l.capsule &&
+        now >= l.capsule.unlockAt &&
+        !l.capsule.openedBy.includes(nickname)
+      );
+
+      if (dueCapsules.length > 0) {
+        try { SoundEngine.playNotification(); } catch (e) {}
+        // 浏览器通知
+        if ('Notification' in window && Notification.permission === 'granted') {
+          dueCapsules.forEach(l => {
+            new Notification('⏳ 时光胶囊已到期', {
+              body: `「${l.content.title || '无名信'}」可以打开了`,
+              icon: '⏳',
+            });
+          });
+        }
+      }
+    } catch (e) {
+      // 静默
+    }
+  },
+
+  _showSetupThenStart() {
+    const container = document.getElementById('view-container');
+    const avatars = ['🌲', '🐱', '🐶', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🐸', '🦁', '🐙', '🌸', '🌟', '🌈', '💎', '🎈', '🎵', '📚', '☕'];
+
+    container.innerHTML = `
+      <div class="setup-view">
+        <div class="setup-card">
+          <div class="setup-header">
+            <h1 class="setup-title">此刻·此地</h1>
+            <p class="setup-subtitle">在进入之前，先介绍一下自己吧</p>
+          </div>
+          <div class="setup-form">
+            <label class="setup-label">你的昵称</label>
+            <input type="text" class="setup-input" id="setup-nickname"
+                   maxlength="12" placeholder="会出现在你写的每封信上...">
+            <label class="setup-label">选一个头像</label>
+            <div class="setup-avatar-grid" id="setup-avatar-grid">
+              ${avatars.map(a => `<button class="setup-avatar-btn" data-avatar="${a}">${a}</button>`).join('')}
+            </div>
+            <button class="setup-btn primary" id="btn-setup-done" disabled>进入</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    let selectedAvatar = '🌲';
+    let nickname = '';
+
+    const nicknameInput = container.querySelector('#setup-nickname');
+    const doneBtn = container.querySelector('#btn-setup-done');
+
+    nicknameInput.addEventListener('input', () => {
+      nickname = nicknameInput.value.trim();
+      doneBtn.disabled = !nickname;
     });
 
-    // 捕获 Promise 异常
-    window.addEventListener('unhandledrejection', function(e) {
-        console.error('[App] 未处理的Promise异常:', e.reason);
-        try { showErrorScreen(); } catch (_) {}
+    container.querySelectorAll('.setup-avatar-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        container.querySelectorAll('.setup-avatar-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedAvatar = btn.dataset.avatar;
+      });
     });
 
-    // ========== DOM 元素 ==========
+    const firstAvatar = container.querySelector('.setup-avatar-btn');
+    if (firstAvatar) firstAvatar.classList.add('selected');
 
-    var $wallPublic   = document.getElementById('wall-public');
-    var $wallDrawer   = document.getElementById('wall-drawer');
-    var $modalContent = document.getElementById('modal-content');
-    var $modalOverlay = document.getElementById('modal-overlay');
+    doneBtn.addEventListener('click', () => {
+      if (!nickname.trim()) return;
+      StorageService.saveUserSettings({ nickname: nickname.trim(), avatar: selectedAvatar });
+      this._startApp();
+    });
+  },
 
-    var $navPublic   = document.getElementById('nav-public');
-    var $navDrawer   = document.getElementById('nav-drawer');
-    var $navTimeletter = document.getElementById('nav-timeletter');
-
-    // 墙的Canvas/容器
-    var $wallCanvas     = document.getElementById('wall-canvas');
-    var $drawerInterior = $wallDrawer?.querySelector('.drawer-interior');
-    var $timeboardSurface = document.getElementById('wall-timeboard')?.querySelector('.timeboard-surface');
-
-    var currentLayer = 'wall-public';
-
-    // ========== 初始化 ==========
-
-    function init() {
-        try {
-            console.log('[App] 未曾寄出的信 — 正在打开...');
-
-            // 初始化各模块
-            if (typeof PublicWall !== 'undefined') {
-                PublicWall.init($wallCanvas, $modalContent, $modalOverlay);
-            }
-            if (typeof PrivateDrawer !== 'undefined') {
-                PrivateDrawer.init($drawerInterior, $modalContent, $modalOverlay);
-            }
-            if (typeof TimeLetter !== 'undefined') {
-                TimeLetter.init($timeboardSurface, $modalContent, $modalOverlay);
-            }
-
-            // 绑定导航
-            if ($navPublic) $navPublic.addEventListener('click', function() { switchLayer('wall-public'); });
-            if ($navDrawer) $navDrawer.addEventListener('click', function() { switchLayer('wall-drawer'); });
-            if ($navTimeletter) $navTimeletter.addEventListener('click', function() { switchLayer('wall-timeboard'); });
-
-            // 全局写信按钮
-            setupWriteButton();
-
-            // 默认显示公共墙
-            switchLayer('wall-public');
-
-            // 应用墙的时间状态
-            applyTimeState();
-
-            console.log('[App] 就绪。');
-        } catch (e) {
-            console.error('[App] 初始化失败:', e);
-            showErrorScreen();
-        }
+  navigateTo(viewName, params = {}) {
+    if (!this.views[viewName]) {
+      console.error(`未知视图: ${viewName}`);
+      return;
     }
 
-    // ========== 页面切换 ==========
+    const container = document.getElementById('view-container');
+    const direction = this._currentView ? 'forward' : 'forward';
+    this._previousView = this._currentView;
+    this._currentView = viewName;
+    this._viewParams = params;
 
-    function switchLayer(targetId) {
-        document.querySelectorAll('.wall-layer').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+    // 播放翻页音效
+    try { SoundEngine.playPageTurn(); } catch (e) {}
 
-        const targetEl = document.getElementById(targetId);
-        if (targetEl) targetEl.classList.add('active');
+    container.innerHTML = '';
 
-        const navBtn = document.querySelector(`[data-target="${targetId}"]`);
-        if (navBtn) navBtn.classList.add('active');
-
-        currentLayer = targetId;
-
-        // 激活模块
-        switch (targetId) {
-            case 'wall-public':
-                if (typeof PublicWall !== 'undefined') PublicWall.show();
-                updateFab('write');
-                break;
-            case 'wall-drawer':
-                if (typeof PrivateDrawer !== 'undefined') PrivateDrawer.show();
-                updateFab('none');
-                break;
-            case 'wall-timeboard':
-                if (typeof TimeLetter !== 'undefined') TimeLetter.show();
-                updateFab('timeletter');
-                break;
-        }
+    try {
+      this.views[viewName].render(container, params);
+      // 新页面滑入动画
+      try { AnimationEngine.pageEnter(container.firstElementChild, direction); } catch (e) {}
+    } catch (e) {
+      console.error(`视图 ${viewName} 渲染失败:`, e);
+      Helpers.showError();
     }
 
-    // ========== 写信按钮 ==========
+    // 通知视图变更
+    try {
+      document.dispatchEvent(new CustomEvent('viewchange', {
+        detail: { view: viewName, previous: this._previousView }
+      }));
+    } catch (e) {}
+  },
 
-    var $fab = null;
+  getCurrentView() {
+    return this._currentView;
+  },
 
-    function setupWriteButton() {
-        $fab = document.createElement('button');
-        $fab.id = 'write-letter-btn';
-        $fab.className = 'write-fab fade-in';
-        $fab.title = '写一封信';
-        $fab.style.cssText = `
-            position: fixed;
-            bottom: 80px; right: 16px;
-            width: 50px; height: 50px;
-            border-radius: 50%;
-            border: none;
-            background: var(--color-accent-warm);
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            z-index: 50;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            transition: transform 0.2s, opacity 0.2s;
-        `;
-        document.body.appendChild($fab);
-        updateFab('write');
-    }
+  getPreviousView() {
+    return this._previousView;
+  },
+};
 
-    function updateFab(mode) {
-        if (!$fab) return;
-        // 清除旧的点击事件：用 clone 替换
-        var newFab = $fab.cloneNode(true);
-        $fab.parentNode.replaceChild(newFab, $fab);
-        $fab = newFab;
-
-        if (mode === 'write') {
-            $fab.innerHTML = '✉️';
-            $fab.title = '写一封信';
-            $fab.style.display = '';
-            $fab.addEventListener('click', function() {
-                if (typeof PublicWall !== 'undefined') PublicWall.startWriting();
-            });
-        } else if (mode === 'timeletter') {
-            $fab.innerHTML = '📌';
-            $fab.title = '埋一封时光信';
-            $fab.style.display = '';
-            $fab.addEventListener('click', function() {
-                if (typeof TimeLetter !== 'undefined') TimeLetter.startCreating();
-            });
-        } else {
-            $fab.style.display = 'none';
-        }
-    }
-
-    // ========== 时间状态 ==========
-
-    function applyTimeState() {
-        if (typeof WallEngine === 'undefined') return;
-
-        const timeState = WallEngine.getCurrentTimeState();
-        const wallSurface = document.querySelector('.wall-surface');
-        if (wallSurface) {
-            wallSurface.style.background = `
-                linear-gradient(180deg,
-                    hsl(${timeState.hue}, ${timeState.sat}%, ${timeState.light}%) 0%,
-                    hsl(${timeState.hue + 5}, ${timeState.sat + 5}%, ${timeState.light - 8}%) 50%,
-                    hsl(${timeState.hue - 3}, ${timeState.sat + 2}%, ${timeState.light - 15}%) 100%
-                )
-            `;
-        }
-
-        // 不再显示全局时间描述，避免影响阅读
-    }
-
-    // 定时刷新时间状态
-    setInterval(applyTimeState, 60000);
-
-    // ========== 启动 ==========
-
-    document.addEventListener('DOMContentLoaded', init);
-})();
+document.addEventListener('DOMContentLoaded', () => {
+  App.init().catch(e => {
+    console.error('应用启动失败:', e);
+    Helpers.showError();
+  });
+});

@@ -58,5 +58,6 @@ Object.freeze(CONFIG.LOCATION);
 Object.freeze(CONFIG.CAMERA);
 Object.freeze(CONFIG.FEATURE);
 Object.freeze(CONFIG.LETTER);
+Object.freeze(CONFIG.LETTER.TYPES);
 Object.freeze(CONFIG.STORAGE);
 Object.freeze(CONFIG.PASSPHRASE);

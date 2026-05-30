@@ -10,6 +10,9 @@ const App = {
     camera: CameraView,
     compose: LetterComposer,
     read: LetterReader,
+    collection: CollectionView,
+    discover: DiscoverView,
+    onboarding: OnboardingView,
   },
 
   async init() {
@@ -17,10 +20,10 @@ const App = {
       await StorageService.init();
       LocationService.start();
 
-      // 首次使用：需要设置昵称
+      // 首次使用：使用入门引导
       const settings = StorageService.getUserSettings();
       if (!settings.nickname) {
-        this._showSetupThenStart();
+        this.navigateTo('onboarding');
         return;
       }
 
@@ -66,6 +69,7 @@ const App = {
       );
 
       if (dueCapsules.length > 0) {
+        try { SoundEngine.playNotification(); } catch (e) {}
         // 浏览器通知
         if ('Notification' in window && Notification.permission === 'granted') {
           dueCapsules.forEach(l => {
@@ -141,19 +145,32 @@ const App = {
       return;
     }
 
+    const container = document.getElementById('view-container');
+    const direction = this._currentView ? 'forward' : 'forward';
     this._previousView = this._currentView;
     this._currentView = viewName;
     this._viewParams = params;
 
-    const container = document.getElementById('view-container');
+    // 播放翻页音效
+    try { SoundEngine.playPageTurn(); } catch (e) {}
+
     container.innerHTML = '';
 
     try {
       this.views[viewName].render(container, params);
+      // 新页面滑入动画
+      try { AnimationEngine.pageEnter(container.firstElementChild, direction); } catch (e) {}
     } catch (e) {
       console.error(`视图 ${viewName} 渲染失败:`, e);
       Helpers.showError();
     }
+
+    // 通知视图变更
+    try {
+      document.dispatchEvent(new CustomEvent('viewchange', {
+        detail: { view: viewName, previous: this._previousView }
+      }));
+    } catch (e) {}
   },
 
   getCurrentView() {

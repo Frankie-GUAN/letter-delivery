@@ -111,7 +111,7 @@ const MapView = {
     this._map = new AMap.Map('amap-container', {
       zoom: 15,
       center: defaultCenter,
-      mapStyle: 'amap://styles/dark',  // 深色主题匹配整体UI
+      mapStyle: 'amap://styles/light',  // 浅色主题匹配暖光UI
       showBuildingBlock: false,
       resizeEnable: true,
     });
@@ -191,6 +191,7 @@ const MapView = {
         this._filterType = btn.dataset.type || null;
         this._refreshList();
         this._updateMapMarkers();
+        SoundEngine.playPageTurn();
       });
     });
 
@@ -572,6 +573,7 @@ const MapView = {
   },
 
   _onLetterClick(letter) {
+    SoundEngine.playUIClick();
     const settings = StorageService.getUserSettings();
     const isMine = letter.sender.nickname === settings.nickname;
 

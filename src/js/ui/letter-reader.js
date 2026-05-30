@@ -17,6 +17,7 @@ const LetterReader = {
     }
 
     const letter = this._letter;
+    SoundEngine.playOpenLetter();
 
     // 如果是时光胶囊，标记当前用户已打开
     if (letter.type === 'self_capsule' && letter.capsule && Date.now() >= letter.capsule.unlockAt) {

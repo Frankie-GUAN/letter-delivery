@@ -553,6 +553,7 @@ const CameraView = {
   _openLetter(letter) {
     this._stopSampleLoop();
     this._stopOrientationTracking();
+    try { SoundEngine.playOpenLetter(); } catch (e) { /* SoundEngine may not be loaded */ }
 
     const arLayer = document.getElementById('camera-ar-layer');
     if (arLayer) {
@@ -601,10 +602,10 @@ const CameraView = {
   // ---- 拍照 ----
 
   _playShutterSound() {
+    try { SoundEngine.playShutter(); } catch (e) { /* fallback to built-in */ }
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const now = ctx.currentTime;
-
       const bufferSize = ctx.sampleRate * 0.08;
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const data = buffer.getChannelData(0);
@@ -612,25 +613,20 @@ const CameraView = {
         const t = i / bufferSize;
         data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 30) * 0.3;
       }
-
       const noise = ctx.createBufferSource();
       noise.buffer = buffer;
-
       const filter = ctx.createBiquadFilter();
       filter.type = 'bandpass';
       filter.frequency.value = 2000;
       filter.Q.value = 0.5;
-
       const gain = ctx.createGain();
       gain.gain.setValueAtTime(0.5, now);
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
-
       noise.connect(filter);
       filter.connect(gain);
       gain.connect(ctx.destination);
       noise.start(now);
       noise.stop(now + 0.08);
-
       if (navigator.vibrate) navigator.vibrate(30);
     } catch (e) { /* 静默失败 */ }
   },

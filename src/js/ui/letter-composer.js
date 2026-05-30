@@ -111,6 +111,7 @@ const LetterComposer = {
         tab.classList.add('active');
         this._currentType = tab.dataset.type;
         this._toggleTypeOptions();
+        SoundEngine.playUIHover();
       });
     });
 
@@ -240,6 +241,7 @@ const LetterComposer = {
         this._sharePassphrase(letter.secret.passphrase, letter.content.title, recipients);
       }
 
+      SoundEngine.playSendLetter();
       App.navigateTo('map');
     } catch (e) {
       console.error('发信失败:', e);

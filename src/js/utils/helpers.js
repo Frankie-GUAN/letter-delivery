@@ -95,4 +95,53 @@ const Helpers = {
       if (p) p.textContent = msg;
     }
   },
+
+  // 计算用户成就
+  getAchievements(allLetters, nickname) {
+    if (!nickname) return [];
+    const myLetters = allLetters.filter(l => l.sender.nickname === nickname);
+    const discovered = allLetters.filter(l => l.sender.nickname !== nickname);
+    const myReplies = [];
+    myLetters.forEach(l => (l.replies || []).forEach(r => myReplies.push(r)));
+    const gotReplies = myLetters.filter(l => (l.replies || []).some(r => r.nickname !== nickname));
+    const locations = new Set(myLetters.map(l => `${l.location.lat.toFixed(3)},${l.location.lng.toFixed(3)}`));
+    const hasSecret = myLetters.some(l => l.type === 'secret');
+    const hasCapsule = myLetters.some(l => l.type === 'self_capsule');
+    const openedCapsule = myLetters.some(l => l.type === 'self_capsule' && l.capsule && l.capsule.openedBy.length > 0);
+
+    return [
+      { id: 'first_letter', name: '初信', icon: '✉️', earned: myLetters.length > 0 },
+      { id: 'treasure_hunter', name: '寻宝者', icon: '🗺️', earned: discovered.length > 0 },
+      { id: 'echo_maker', name: '回响者', icon: '💌', earned: gotReplies.length > 0 },
+      { id: 'traveler', name: '旅人', icon: '🌍', earned: locations.size >= 3 },
+      { id: 'secret_keeper', name: '秘密守护者', icon: '🔒', earned: hasSecret },
+      { id: 'time_capsuler', name: '时空旅人', icon: '⏳', earned: hasCapsule },
+      { id: 'prolific', name: '笔墨丰盈', icon: '📝', earned: myLetters.length >= 5 },
+      { id: 'capsule_opener', name: '解锁者', icon: '🔓', earned: openedCapsule },
+    ];
+  },
+
+  // 生成30天活跃热力图数据
+  getActivityHeatmap(allLetters, nickname) {
+    const days = [];
+    const now = Date.now();
+    for (let i = 29; i >= 0; i--) {
+      const dayStart = new Date(now - i * 86400000).setHours(0, 0, 0, 0);
+      const dayEnd = dayStart + 86400000;
+      const count = allLetters.filter(l => {
+        if (l.sender.nickname !== nickname) return false;
+        return l.created >= dayStart && l.created < dayEnd;
+      }).length;
+      days.push({
+        date: dayStart,
+        level: count === 0 ? 0 : count === 1 ? 1 : count <= 3 ? 2 : count <= 5 ? 3 : 4,
+      });
+    }
+    return days;
+  },
+
+  // 随机取数组元素
+  randomFromArray(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  },
 };

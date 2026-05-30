@@ -9,8 +9,16 @@ const HomeView = {
     const avatar = settings.avatar || '🌲';
 
     // 获取我的信件和回响
+    const allLetters = await StorageService.getAllLetters();
     const myLetters = await this._getMyLetters(nickname);
     const recentReplies = this._getRecentReplies(myLetters);
+
+    // 成就
+    const achievements = Helpers.getAchievements(allLetters, nickname);
+    const earnedCount = achievements.filter(a => a.earned).length;
+
+    // 热力图
+    const heatmap = Helpers.getActivityHeatmap(allLetters, nickname);
 
     // 附近信件数（如果有位置）
     let nearbyCount = 0;
@@ -61,6 +69,33 @@ const HomeView = {
           </div>
         </div>
 
+        <!-- 成就徽章 -->
+        <div class="home-section" style="margin-bottom:14px;">
+          <div class="home-section-header">
+            <h3 class="home-section-title">🏆 成就 · ${earnedCount}/${achievements.length}</h3>
+          </div>
+          <div class="achievements-row" id="achievements-row">
+            ${achievements.map((a, i) => `
+              <div class="achievement-badge ${a.earned ? 'earned' : ''} delay-${Math.min(i + 1, 10)}">
+                <span class="achievement-icon">${a.icon}</span>
+                <span class="achievement-name">${a.name}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- 活跃热力图 -->
+        <div class="home-section" style="margin-bottom:18px;">
+          <div class="home-section-header">
+            <h3 class="home-section-title">📅 近30天活跃</h3>
+          </div>
+          <div class="activity-heatmap">
+            ${heatmap.map(d => `
+              <div class="heatmap-dot level-${d.level}" title="${new Date(d.date).toLocaleDateString('zh-CN')}"></div>
+            `).join('')}
+          </div>
+        </div>
+
         <!-- 核心操作：探索地图 -->
         <button class="home-explore-btn" id="btn-explore-map">
           <span class="home-explore-icon">🗺️</span>
@@ -98,10 +133,27 @@ const HomeView = {
         <!-- 底部安全区 -->
         <div class="home-bottom-spacer"></div>
       </div>
+
+      <!-- FAB 快速操作 -->
+      <div class="fab-container" id="home-fab">
+        <div class="fab-menu" id="fab-menu">
+          <button class="fab-menu-item" data-action="compose">
+            <span class="fab-menu-item-icon">📝</span> 写一封信
+          </button>
+          <button class="fab-menu-item" data-action="collection">
+            <span class="fab-menu-item-icon">📬</span> 我的信匣
+          </button>
+          <button class="fab-menu-item" data-action="discover">
+            <span class="fab-menu-item-icon">🎲</span> 偶遇一封
+          </button>
+        </div>
+        <button class="fab-primary" id="fab-primary">✉️</button>
+      </div>
     `;
 
     this._bindEvents(container, myLetters, recentReplies);
     this._setupPullToRefresh(container);
+    this._setupFAB(container);
   },
 
   _greeting() {
@@ -190,6 +242,7 @@ const HomeView = {
   _bindEvents(container, myLetters) {
     // 探索地图按钮
     container.querySelector('#btn-explore-map').addEventListener('click', () => {
+      SoundEngine.playUIClick();
       App.navigateTo('map');
     });
 
@@ -278,6 +331,47 @@ const HomeView = {
       StorageService.saveUserSettings({ nickname: newNickname, avatar: selectedAvatar });
       overlay.remove();
       this.render(container);
+    });
+  },
+
+  _setupFAB(container) {
+    const fabBtn = container.querySelector('#fab-primary');
+    const fabMenu = container.querySelector('#fab-menu');
+    let fabOpen = false;
+
+    fabBtn.addEventListener('click', () => {
+      fabOpen = !fabOpen;
+      SoundEngine.playUIClick();
+      if (fabOpen) {
+        fabBtn.classList.add('open');
+        fabMenu.classList.add('open');
+      } else {
+        fabBtn.classList.remove('open');
+        fabMenu.classList.remove('open');
+      }
+    });
+
+    // 点击菜单项
+    container.querySelectorAll('.fab-menu-item').forEach(item => {
+      item.addEventListener('click', () => {
+        SoundEngine.playPageTurn();
+        fabBtn.classList.remove('open');
+        fabMenu.classList.remove('open');
+        fabOpen = false;
+        const action = item.dataset.action;
+        if (action === 'compose') App.navigateTo('camera');
+        else if (action === 'collection') App.navigateTo('collection');
+        else if (action === 'discover') App.navigateTo('discover');
+      });
+    });
+
+    // 点击空白处关闭
+    document.addEventListener('click', (e) => {
+      if (fabOpen && !e.target.closest('#home-fab')) {
+        fabBtn.classList.remove('open');
+        fabMenu.classList.remove('open');
+        fabOpen = false;
+      }
     });
   },
 

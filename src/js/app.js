@@ -53,6 +53,7 @@
 
     var $navPublic   = document.getElementById('nav-public');
     var $navDrawer   = document.getElementById('nav-drawer');
+    var $navTimeletter = document.getElementById('nav-timeletter');
 
     // 墙的信封/内容容器
     var $wallLetters    = $wallPublic?.querySelector('.wall-letters');
@@ -81,6 +82,7 @@
             // 绑定导航
             if ($navPublic) $navPublic.addEventListener('click', function() { switchLayer('wall-public'); });
             if ($navDrawer) $navDrawer.addEventListener('click', function() { switchLayer('wall-drawer'); });
+            if ($navTimeletter) $navTimeletter.addEventListener('click', function() { switchLayer('wall-timeboard'); });
 
             // 全局写信按钮
             setupWriteButton();
@@ -116,23 +118,29 @@
         switch (targetId) {
             case 'wall-public':
                 if (typeof PublicWall !== 'undefined') PublicWall.show();
+                updateFab('write');
                 break;
             case 'wall-drawer':
                 if (typeof PrivateDrawer !== 'undefined') PrivateDrawer.show();
+                updateFab('none');
+                break;
+            case 'wall-timeboard':
+                if (typeof TimeLetter !== 'undefined') TimeLetter.show();
+                updateFab('timeletter');
                 break;
         }
     }
 
     // ========== 写信按钮 ==========
 
+    var $fab = null;
+
     function setupWriteButton() {
-        // 在公共墙上添加写信入口
-        const writeBtn = document.createElement('button');
-        writeBtn.id = 'write-letter-btn';
-        writeBtn.className = 'write-fab fade-in';
-        writeBtn.innerHTML = '✉️';
-        writeBtn.title = '写一封信';
-        writeBtn.style.cssText = `
+        $fab = document.createElement('button');
+        $fab.id = 'write-letter-btn';
+        $fab.className = 'write-fab fade-in';
+        $fab.title = '写一封信';
+        $fab.style.cssText = `
             position: fixed;
             bottom: 80px; right: 16px;
             width: 50px; height: 50px;
@@ -144,16 +152,33 @@
             cursor: pointer;
             z-index: 50;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            transition: transform 0.2s;
+            transition: transform 0.2s, opacity 0.2s;
         `;
-        writeBtn.addEventListener('click', () => {
-            // 根据当前所在层判断写信类型
-            if (currentLayer === 'wall-public' && typeof PublicWall !== 'undefined') {
-                PublicWall.startWriting();
-            }
-            // 时光信创建可从公告栏触发
-        });
-        document.body.appendChild(writeBtn);
+        document.body.appendChild($fab);
+        updateFab('write');
+    }
+
+    function updateFab(mode) {
+        if (!$fab) return;
+        $fab.removeEventListener('click', handleFabClick);
+
+        if (mode === 'write') {
+            $fab.innerHTML = '✉️';
+            $fab.title = '写一封信';
+            $fab.style.display = '';
+            $fab.addEventListener('click', function() {
+                if (typeof PublicWall !== 'undefined') PublicWall.startWriting();
+            });
+        } else if (mode === 'timeletter') {
+            $fab.innerHTML = '📌';
+            $fab.title = '埋一封时光信';
+            $fab.style.display = '';
+            $fab.addEventListener('click', function() {
+                if (typeof TimeLetter !== 'undefined') TimeLetter.startCreating();
+            });
+        } else {
+            $fab.style.display = 'none';
+        }
     }
 
     // ========== 时间状态 ==========

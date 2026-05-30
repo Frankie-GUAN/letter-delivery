@@ -300,3 +300,510 @@ body {
 }
 
 .fade-in { animation: fadeIn 0.5s ease forwards; }
+
+/* ========================================
+   信封视觉变体（按藏身方式）
+   ======================================== */
+.envelope-body.slot-mailbox {
+    background: linear-gradient(135deg, #c4b5a0 0%, #a89880 100%);
+    border: 1px solid rgba(0,0,0,0.15);
+}
+.envelope-body.slot-door {
+    background: linear-gradient(135deg, #d8cec0 0%, #c0b0a0 100%);
+    transform: scaleY(0.7);
+}
+.envelope-body.slot-window {
+    background: linear-gradient(135deg, #e8e0d5 0%, #d0c8b8 100%);
+    box-shadow: 2px 3px 12px rgba(0,0,0,0.15), inset 0 0 20px rgba(255,255,255,0.3);
+}
+.envelope-body.slot-pipe {
+    background: linear-gradient(135deg, #b8a898 0%, #a09080 100%);
+    border-top: 2px solid rgba(160,80,40,0.3);
+}
+.envelope-body.slot-crack {
+    transform: scaleX(0.6);
+    background: linear-gradient(135deg, #d0c0b0 0%, #b0a090 100%);
+}
+
+/* ========================================
+   信封组件内部
+   ======================================== */
+.envelope-body {
+    width: 100px;
+    height: 60px;
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-letter);
+}
+.envelope-flap {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 28px;
+    background: rgba(0,0,0,0.08);
+    clip-path: polygon(0 0, 100% 0, 85% 100%, 15% 100%);
+}
+.envelope-texture {
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.02) 4px, rgba(0,0,0,0.02) 5px);
+    pointer-events: none;
+}
+.envelope-crease {
+    position: absolute;
+    top: 50%; left: 5%; right: 5%;
+    height: 1px;
+    background: rgba(0,0,0,0.08);
+    pointer-events: none;
+}
+.envelope-preview {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 76%;
+    text-align: center;
+}
+.envelope-first-line {
+    font-family: var(--font-hand);
+    font-size: 8px;
+    color: rgba(0,0,0,0.4);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ========================================
+   空白状态
+   ======================================== */
+.wall-empty, .wall-empty-state, .drawer-empty-state {
+    text-align: center;
+    color: var(--color-ink-faded);
+    padding: 24px 16px;
+    font-family: var(--font-hand);
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+/* ========================================
+   写信面板增强
+   ======================================== */
+.write-title {
+    font-family: var(--font-hand);
+    font-size: 20px;
+    color: var(--color-ink);
+    margin-bottom: 6px;
+    text-align: center;
+}
+.write-char-count {
+    display: block;
+    text-align: right;
+    font-size: 11px;
+    color: var(--color-ink-faded);
+    margin-top: 4px;
+    font-family: var(--font-body);
+    transition: color 0.2s;
+}
+.write-signature-row {
+    margin: 10px 0;
+}
+.write-signature-row input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(0,0,0,0.1);
+    background: var(--color-paper);
+    font-family: var(--font-hand);
+    font-size: 14px;
+    border-radius: 2px;
+    outline: none;
+    color: var(--color-ink);
+}
+.write-signature-row input::placeholder {
+    color: var(--color-ink-faded);
+    font-style: italic;
+    opacity: 0.6;
+}
+.write-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+}
+
+/* 信纸预览 */
+.paper-notebook textarea {
+    background: #f8f4ea;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 27px, #d8d0c0 27px, #d8d0c0 28px);
+    line-height: 28px;
+}
+.paper-receipt textarea {
+    background: #fafaf5;
+    font-family: "Courier New", monospace !important;
+    font-size: 13px;
+    border: 1px dashed #d0d0c0;
+}
+.paper-napkin textarea {
+    background: #fdfaf5;
+    font-family: var(--font-hand);
+}
+.paper-calendar textarea {
+    background: #f6f2e8;
+    border-top: 3px solid #c0a880;
+}
+.paper-burned textarea {
+    background: #ede5d5;
+}
+
+/* ========================================
+   选择器样式
+   ======================================== */
+.picker-label {
+    font-size: 12px;
+    color: var(--color-ink-faded);
+    margin-bottom: 8px;
+    font-family: var(--font-body);
+}
+.slot-options, .paper-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+.slot-option, .paper-option {
+    padding: 6px 12px;
+    border: 1px solid rgba(0,0,0,0.12);
+    background: var(--color-paper);
+    border-radius: 20px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    color: var(--color-ink);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.slot-option:hover, .paper-option:hover {
+    background: rgba(196,122,74,0.08);
+    border-color: var(--color-accent-warm);
+}
+.slot-option.selected, .paper-option.selected {
+    background: var(--color-accent-warm);
+    color: white;
+    border-color: var(--color-accent-warm);
+}
+
+/* ========================================
+   按钮样式
+   ======================================== */
+.btn-send {
+    width: 100%;
+    padding: 14px;
+    background: var(--color-accent-warm);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-family: var(--font-hand);
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+}
+.btn-send:hover { background: #b0683e; }
+.btn-send:active { transform: scale(0.98); }
+.btn-send:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+.btn-secondary {
+    padding: 12px 18px;
+    background: transparent;
+    color: var(--color-ink-faded);
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 4px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    cursor: pointer;
+}
+.btn-secondary:hover { background: rgba(0,0,0,0.03); }
+
+.modal-close {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0,0,0,0.05);
+    color: var(--color-ink-faded);
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+.modal-close:hover { background: rgba(0,0,0,0.12); }
+
+/* ========================================
+   回响区域
+   ======================================== */
+.echo-section {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    text-align: center;
+}
+.echo-section-hint {
+    font-size: 12px;
+    color: var(--color-ink-faded);
+    margin-bottom: 8px;
+    font-family: var(--font-body);
+}
+.echo-picker {
+    text-align: center;
+}
+.echo-options {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+.echo-btn {
+    background: rgba(0,0,0,0.03);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 16px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 12px;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+.echo-btn:hover {
+    background: rgba(196,122,74,0.1);
+    border-color: var(--color-accent-warm);
+    transform: translateY(-2px);
+}
+.echo-btn:active { transform: scale(0.95); }
+.echo-emoji { font-size: 20px; }
+.echo-label { font-size: 10px; color: var(--color-ink-faded); }
+
+/* ========================================
+   私人抽屉
+   ======================================== */
+.drawer-stats {
+    display: flex;
+    justify-content: space-around;
+    padding: 16px 12px;
+    margin-bottom: 14px;
+    background: rgba(0,0,0,0.03);
+    border-radius: 4px;
+}
+.stat-item {
+    font-size: 12px;
+    color: var(--color-ink-faded);
+    font-family: var(--font-body);
+    text-align: center;
+}
+.stat-item strong {
+    display: block;
+    font-size: 18px;
+    color: var(--color-ink);
+    font-family: var(--font-hand);
+    margin-bottom: 2px;
+}
+.drawer-section {
+    margin-bottom: 20px;
+}
+.drawer-heading {
+    font-family: var(--font-hand);
+    font-size: 16px;
+    color: var(--color-ink);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.drawer-letter-item {
+    background: var(--color-paper);
+    padding: 14px;
+    margin-bottom: 8px;
+    border-radius: 2px;
+    cursor: pointer;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.06);
+    transition: transform 0.15s;
+}
+.drawer-letter-item:hover { transform: translateX(3px); }
+.drawer-item-preview {
+    font-family: var(--font-hand);
+    font-size: 14px;
+    color: var(--color-ink);
+    line-height: 1.6;
+}
+.drawer-item-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--color-ink-faded);
+    margin-top: 6px;
+    font-family: var(--font-body);
+}
+.drawer-echo-badge {
+    color: var(--color-accent-warm);
+}
+.drawer-draft-item {
+    background: var(--color-paper-aged);
+    padding: 12px 14px;
+    margin-bottom: 6px;
+    border-radius: 2px;
+    border-left: 3px solid var(--color-accent-warm);
+}
+.draft-preview {
+    font-family: var(--font-hand);
+    font-size: 13px;
+    color: var(--color-ink);
+    opacity: 0.7;
+}
+.draft-date {
+    font-size: 10px;
+    color: var(--color-ink-faded);
+    margin: 4px 0;
+    font-family: var(--font-body);
+}
+.draft-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+}
+.draft-btn {
+    padding: 4px 12px;
+    border: none;
+    border-radius: 12px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: background 0.2s;
+}
+.draft-btn.edit {
+    background: var(--color-accent-warm);
+    color: white;
+}
+.draft-btn.edit:hover { background: #b0683e; }
+.draft-btn.discard {
+    background: rgba(0,0,0,0.06);
+    color: var(--color-ink-faded);
+}
+.draft-btn.discard:hover { background: rgba(192,57,43,0.1); color: #c0392b; }
+.drawer-note {
+    text-align: center;
+    font-size: 12px;
+    color: var(--color-ink-faded);
+    margin-top: 14px;
+    font-family: var(--font-hand);
+}
+
+/* ========================================
+   时光信卡片增强
+   ======================================== */
+.tl-card-pin {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px;
+    z-index: 2;
+    filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.2));
+}
+.tl-card-title {
+    font-family: var(--font-hand);
+    font-size: 13px;
+    color: var(--color-ink);
+    margin: 6px 0 4px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.tl-card-status {
+    font-size: 11px;
+    font-family: var(--font-body);
+}
+
+/* 时光信步骤指示器 */
+.tl-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    margin: 12px 0;
+    font-family: var(--font-body);
+    font-size: 11px;
+}
+.tl-step { color: var(--color-ink-faded); opacity: 0.5; }
+.tl-step.active { color: var(--color-accent-warm); opacity: 1; font-weight: bold; }
+.tl-step.done { color: #6b8e5a; opacity: 1; }
+.tl-step-arrow { color: var(--color-ink-faded); opacity: 0.3; }
+
+.tl-step-hint {
+    font-size: 13px;
+    color: var(--color-ink-faded);
+    text-align: center;
+    line-height: 1.7;
+    margin-bottom: 12px;
+    font-family: var(--font-body);
+}
+.tl-hint {
+    font-size: 12px;
+    color: var(--color-ink-faded);
+    margin-top: 6px;
+}
+.tl-hint-error {
+    color: #c0392b;
+    font-size: 13px;
+    margin-top: 8px;
+}
+.tl-similarity {
+    font-size: 11px;
+    color: var(--color-ink-faded);
+    margin-top: 4px;
+}
+.tl-countdown-live {
+    font-family: var(--font-body);
+    color: var(--color-accent-warm);
+}
+.tl-unlock-note {
+    font-style: italic;
+    opacity: 0.7;
+}
+
+/* ========================================
+   动画
+   ======================================== */
+@keyframes echoBounce {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    30%  { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+    60%  { transform: translate(-50%, -50%) scale(0.9); }
+    100% { opacity: 0; transform: translate(-50%, -80%) scale(1); }
+}
+
+@keyframes floatUp {
+    from { opacity: 1; transform: translate(-50%, -50%); }
+    to   { opacity: 0; transform: translate(-50%, -200%); }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25%      { transform: translateX(-6px); }
+    75%      { transform: translateX(6px); }
+}
+
+@keyframes letterFold {
+    0%   { opacity: 1; transform: scale(1); }
+    50%  { opacity: 0.6; transform: scale(0.6) rotate(-10deg); }
+    100% { opacity: 0; transform: scale(0.2) rotate(-20deg) translateY(-100px); }
+}
+
+.flying-envelope {
+    animation: letterFold 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}

@@ -160,7 +160,10 @@
 
     function updateFab(mode) {
         if (!$fab) return;
-        $fab.removeEventListener('click', handleFabClick);
+        // 清除旧的点击事件：用 clone 替换
+        var newFab = $fab.cloneNode(true);
+        $fab.parentNode.replaceChild(newFab, $fab);
+        $fab = newFab;
 
         if (mode === 'write') {
             $fab.innerHTML = '✉️';

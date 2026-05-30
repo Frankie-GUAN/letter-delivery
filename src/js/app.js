@@ -14,6 +14,20 @@ const App = {
     try {
       await StorageService.init();
       LocationService.start();
+
+      // 尝试连接后端同步服务
+      const isOnline = await ApiService.checkConnection();
+      if (isOnline) {
+        SyncService.start();
+        SyncService.requestNotificationPermission();
+
+        // 注册当前用户
+        const settings = StorageService.getUserSettings();
+        if (settings.nickname) {
+          ApiService.registerNotification(settings.nickname);
+        }
+      }
+
       this.navigateTo('map');
     } catch (e) {
       console.error('初始化失败:', e);

@@ -42,6 +42,14 @@ const CONFIG = {
     LETTERS_STORE: 'letters',
   },
 
+  // 同步服务
+  SYNC: {
+    SERVER_URL: 'http://localhost:3456',
+    INTERVAL: 30000,              // 同步间隔（ms）
+    NOTIFY_INTERVAL: 15000,       // 通知检查间隔（ms）
+    NEARBY_RADIUS: 50,            // 服务端搜索半径（米）
+  },
+
   // 口令
   PASSPHRASE: {
     LENGTH: 8,                    // 口令字符数
@@ -60,4 +68,5 @@ Object.freeze(CONFIG.FEATURE);
 Object.freeze(CONFIG.LETTER);
 Object.freeze(CONFIG.LETTER.TYPES);
 Object.freeze(CONFIG.STORAGE);
+Object.freeze(CONFIG.SYNC);
 Object.freeze(CONFIG.PASSPHRASE);

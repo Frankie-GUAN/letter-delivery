@@ -122,4 +122,31 @@ const StorageService = {
       localStorage.setItem('cikecidi_avatar', settings.avatar);
     }
   },
+
+  // ---- 同步追踪 ----
+
+  async getUnsyncedLetters() {
+    const all = await this.getAllLetters();
+    return all.filter(l => !l._synced);
+  },
+
+  async markSynced(ids) {
+    const tx = this._db.transaction(CONFIG.STORAGE.LETTERS_STORE, 'readwrite');
+    const store = tx.objectStore(CONFIG.STORAGE.LETTERS_STORE);
+    for (const id of ids) {
+      const letter = await new Promise((resolve) => {
+        const req = store.get(id);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
+      if (letter) {
+        letter._synced = true;
+        store.put(letter);
+      }
+    }
+    return new Promise((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(new Error('标记同步失败'));
+    });
+  },
 };

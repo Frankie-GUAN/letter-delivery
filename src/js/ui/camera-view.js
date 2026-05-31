@@ -134,14 +134,15 @@ const CameraView = {
     try {
       const granted = await DeviceOrientationEvent.requestPermission();
       if (granted === 'granted') {
-        const arLayer = document.getElementById('camera-ar-layer');
-        if (arLayer) arLayer.innerHTML = '';
         this._startOrientationTracking();
       }
     } catch (e) {
       console.warn('方向权限请求失败:', e);
-      // 优雅降级：使用虚拟朝向
     }
+    // 无论结果如何，清除权限提示遮罩并继续（使用虚拟朝向降级）
+    const arLayer = document.getElementById('camera-ar-layer');
+    if (arLayer) arLayer.innerHTML = '';
+    this._startOrientationTracking();
   },
 
   _startOrientationTracking() {
@@ -251,6 +252,35 @@ const CameraView = {
     };
     window.addEventListener('resize', this._handleResize);
     window.addEventListener('orientationchange', this._handleResize);
+
+    // 桌面端：键盘旋转虚拟朝向
+    this._handleKeyDown = (e) => {
+      if (e.key === 'ArrowLeft') {
+        this._virtualHeading = (this._virtualHeading - 10 + 360) % 360;
+        this._lastRenderKey = '';
+        this._updateCompassUI();
+        this._renderFrame();
+      } else if (e.key === 'ArrowRight') {
+        this._virtualHeading = (this._virtualHeading + 10) % 360;
+        this._lastRenderKey = '';
+        this._updateCompassUI();
+        this._renderFrame();
+      }
+    };
+    window.addEventListener('keydown', this._handleKeyDown);
+
+    // 桌面端：点击指南针旋转
+    const compass = container.querySelector('#camera-compass');
+    if (compass) {
+      compass.addEventListener('click', () => {
+        this._virtualHeading = (this._virtualHeading + 45) % 360;
+        this._lastRenderKey = '';
+        this._updateCompassUI();
+        this._renderFrame();
+      });
+      compass.style.cursor = 'pointer';
+      compass.title = '点击旋转朝向（桌面端）';
+    }
   },
 
   // ---- 数据循环（1s间隔） ----
@@ -326,7 +356,13 @@ const CameraView = {
           }
         } catch (e) { /* 比对失败 */ }
       } else if (!letter.photo.hasAlignment) {
-        alignmentPercent = 100;
+        alignmentPercent = Math.round(distRatio * 100);
+      } else if (d < CONFIG.LOCATION.FAR_RANGE && letter.photo.features.length > 0) {
+        // 超出近距范围但仍在可见范围内的对齐信件，尝试 CV 比对
+        try {
+          const score = FeatureEngine.computeAlignment(letter.photo.features, this._video);
+          alignmentPercent = FeatureEngine.scoreToPercent(score);
+        } catch (e) { /* 比对失败 */ }
       }
 
       const alignGoal = CONFIG.FEATURE.ALIGNMENT_THRESHOLD * 100;
@@ -395,7 +431,7 @@ const CameraView = {
 
     // 渲染键：仅当信封位置/状态变化时才重建DOM，消除闪烁
     const renderKey = onScreenLetters.map(r =>
-      `${r.letter.id}:${Math.round(r.xPercent / 3)}:${r.tier}:${r.alignmentPercent >= CONFIG.FEATURE.ALIGNMENT_THRESHOLD * 100 ? 1 : 0}`
+      `${r.letter.id}:${Math.round(r.xPercent / 2)}:${r.tier}:${r.alignmentPercent >= CONFIG.FEATURE.ALIGNMENT_THRESHOLD * 100 ? 1 : 0}`
     ).join('|');
     if (renderKey === this._lastRenderKey && this._lastRenderKey !== '') return;
     this._lastRenderKey = renderKey;
@@ -403,6 +439,7 @@ const CameraView = {
     // 渲染视野内信封
     if (arLayer) {
       arLayer.innerHTML = onScreenLetters.map((r, i) => this._renderAREnvelope(r, i, onScreenLetters.length)).join('');
+      if (onScreenLetters.length > 0) this._spawnParticles(arLayer);
     }
 
     // 雷达：视野外方向提示
@@ -509,6 +546,22 @@ const CameraView = {
         </div>
       </div>
     `;
+  },
+
+  _spawnParticles(arLayer) {
+    const existing = arLayer.querySelectorAll('.ar-particle');
+    if (existing.length >= 15) return;
+    const toAdd = Math.min(8, 15 - existing.length);
+    for (let i = 0; i < toAdd; i++) {
+      const p = document.createElement('div');
+      p.className = 'ar-particle';
+      p.style.setProperty('--p-dur', `${1.5 + Math.random() * 2.5}s`);
+      p.style.setProperty('--p-delay', `${Math.random() * 2}s`);
+      p.style.setProperty('--p-drift', `${(Math.random() - 0.5) * 20}px`);
+      p.style.left = `${10 + Math.random() * 80}%`;
+      p.style.top = `${20 + Math.random() * 60}%`;
+      arLayer.appendChild(p);
+    }
   },
 
   _bindEnvelopeClicks(arLayer, renderedLetters) {
@@ -678,17 +731,49 @@ const CameraView = {
     try {
       this._playShutterSound();
 
-      const canvas = Helpers.scaleImageToCanvas(
-        this._video,
-        Math.min(this._video.videoWidth, CONFIG.CAMERA.PHOTO_MAX_WIDTH),
-        Math.min(this._video.videoHeight, CONFIG.CAMERA.PHOTO_MAX_WIDTH)
-      );
+      const maxW = Math.min(this._video.videoWidth, CONFIG.CAMERA.PHOTO_MAX_WIDTH);
+      const maxH = Math.min(this._video.videoHeight, CONFIG.CAMERA.PHOTO_MAX_WIDTH);
+      const canvas = Helpers.scaleImageToCanvas(this._video, maxW, maxH);
+      const ctx = canvas.getContext('2d');
+
+      // 叠加 AR 信封
+      const heading = this._getHeading();
+      const pos = LocationService.getCurrent();
+      if (pos && this._letterCache.length > 0) {
+        const fov = this._fov;
+        this._letterCache.forEach(cached => {
+          let diff = cached.bearing - heading;
+          while (diff > 180) diff -= 360;
+          while (diff < -180) diff += 360;
+          if (Math.abs(diff) >= fov / 2 + 5) return;
+
+          const xPercent = 50 + (diff / (fov / 2)) * 50;
+          const cx = (xPercent / 100) * maxW;
+          const cy = maxH * (0.15 + (1 - cached.distRatio) * 0.55);
+
+          // 信封图标
+          const emoji = cached.letter.type === 'secret' ? '🔒' : cached.letter.type === 'self_capsule' ? '⏳' : '✉️';
+          ctx.font = `${Math.round(24 + cached.distRatio * 20)}px serif`;
+          ctx.textAlign = 'center';
+          ctx.fillText(emoji, cx, cy);
+
+          // 距离标签
+          if (cached.distRatio > 0.3) {
+            ctx.font = `${Math.round(11 + cached.distRatio * 4)}px sans-serif`;
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 3;
+            ctx.fillText(`${Math.round(cached.d)}m`, cx, cy + 24 + cached.distRatio * 10);
+            ctx.shadowBlur = 0;
+          }
+        });
+      }
+
       const dataURL = canvas.toDataURL('image/jpeg', CONFIG.CAMERA.PHOTO_QUALITY);
 
       const thumbCanvas = Helpers.scaleImageToCanvas(canvas, 128, 128);
       const thumbnail = thumbCanvas.toDataURL('image/jpeg', 0.7);
 
-      const pos = LocationService.getCurrent();
       if (!pos) {
         alert('无法获取当前位置，请检查定位权限');
         return;
@@ -726,6 +811,10 @@ const CameraView = {
       window.removeEventListener('resize', this._handleResize);
       window.removeEventListener('orientationchange', this._handleResize);
       this._handleResize = null;
+    }
+    if (this._handleKeyDown) {
+      window.removeEventListener('keydown', this._handleKeyDown);
+      this._handleKeyDown = null;
     }
     if (this._stream) {
       this._stream.getTracks().forEach(t => t.stop());

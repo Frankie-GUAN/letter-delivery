@@ -46,7 +46,21 @@
       "Bash(curl -sk \"https://localhost:3457/js/data/templates.js\")",
       "Bash(curl -sk \"https://localhost:3457/js/api-key.js\")",
       "Bash(curl -sk -w \"HTTP %{http_code} → %{redirect_url}\" \"http://localhost:3456/\")",
-      "Bash(curl -sk -I \"https://localhost:3457/css/main.css\")"
+      "Bash(curl -sk -I \"https://localhost:3457/css/main.css\")",
+      "Bash(git rm *)",
+      "Bash(rm -f src/css/main.css.bak)",
+      "Bash(tasklist //FI \"IMAGENAME eq node.exe\")",
+      "Bash(tasklist //FI \"IMAGENAME eq nginx.exe\")",
+      "Bash(curl -sk https://127.0.0.1:3457/api/letters/nearby?lat=0)",
+      "Bash(radius=1 2>&1)",
+      "Bash(curl -s http://127.0.0.1:3000/api/letters/nearby?lat=0)",
+      "Bash(curl *)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:plugins.trac.wordpress.org)",
+      "WebFetch(domain:dev.to)",
+      "Bash(sed -i '342s/positions.length/15/' \"E:\\\\桌面\\\\letter\\\\letter-delivery\\\\src\\\\js\\\\utils\\\\qrcode.js\")",
+      "Bash(sed -i '363s/15/positions.length/' \"E:\\\\桌面\\\\letter\\\\letter-delivery\\\\src\\\\js\\\\utils\\\\qrcode.js\")"
     ]
   }
 }

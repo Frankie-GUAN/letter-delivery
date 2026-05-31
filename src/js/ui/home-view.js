@@ -385,8 +385,15 @@ const HomeView = {
     });
   },
 
-  _showShareModal() {
-    const url = window.location.origin + window.location.pathname;
+  async _showShareModal() {
+    let url = window.location.origin + window.location.pathname;
+    try {
+      const resp = await fetch('/api/server-info');
+      if (resp.ok) {
+        const info = await resp.json();
+        if (info.url) url = info.url;
+      }
+    } catch (e) { /* fallback to window.location.origin */ }
     const qrDataURL = QRCode.render(url, 220);
 
     const overlay = document.createElement('div');
@@ -398,7 +405,7 @@ const HomeView = {
         <div class="share-qr-wrap">
           <img src="${qrDataURL}" alt="QR码" class="share-qr-img">
         </div>
-        <p class="share-hint">用手机相机扫描二维码即可打开</p>
+        <p class="share-hint">📱 手机与电脑连接同一 WiFi 后扫码即可打开</p>
         <div class="share-url-row">
           <input type="text" class="share-url-input" id="share-url-input" value="${url}" readonly>
           <button class="share-copy-btn" id="btn-copy-url">复制</button>

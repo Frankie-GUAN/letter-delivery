@@ -334,6 +334,38 @@ function mergeReplies(existing, incoming) {
 
 // ========== 启动 ==========
 
+// 获取服务器局域网IP（优先真实网卡，跳过虚拟机/虚拟网卡）
+function getLanIP() {
+  const os = require('os');
+  const ifaces = os.networkInterfaces();
+  const vmVendors = /VMware|VirtualBox|Hyper-V|vEthernet|Docker|WSL/i;
+  const candidates = [];
+
+  for (const name of Object.keys(ifaces)) {
+    if (vmVendors.test(name)) continue;
+    for (const iface of ifaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        // 优先 WiFi / 以太网
+        if (/wlan|wi-fi|en\d|eth|以太网|无线/i.test(name)) {
+          return iface.address;
+        }
+        candidates.push(iface.address);
+      }
+    }
+  }
+  return candidates[0] || '127.0.0.1';
+}
+
+// 服务器信息（供前端生成扫码链接用）
+const HTTPS_PORT = process.env.HTTPS_PORT || 3457;
+app.get('/api/server-info', (req, res) => {
+  res.json({
+    lanIP: getLanIP(),
+    httpsPort: HTTPS_PORT,
+    url: `https://${getLanIP()}:${HTTPS_PORT}/`,
+  });
+});
+
 const API_PORT = process.env.API_PORT || 3000;
 
 ensureDataDir();

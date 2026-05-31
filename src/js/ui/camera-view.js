@@ -131,7 +131,7 @@ const CameraView = {
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
       background: var(--accent, #c4852a); color: #fff; border: none;
       border-radius: 12px; padding: 16px 32px; font-size: 18px;
-      font-family: sans-serif; z-index: 30; cursor: pointer;
+      font-family: 'Songti SC', 'STSong', serif; z-index: 30; cursor: pointer;
     `;
     btn.addEventListener('click', async () => {
       btn.remove();

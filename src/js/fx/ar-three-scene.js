@@ -14,6 +14,12 @@ const ARThreeScene = {
   _wrapper: null,
   _fxOverlay: null,
   _fxCtx: null,
+  _bloomTarget: null,
+  _bloomComposer: null,
+  _bloomScene: null,
+  _bloomQuad: null,
+  _stormParticles: [],
+  _stormActive: false,
 
   // ── 初始化 ──
   init(container) {
@@ -31,7 +37,7 @@ const ARThreeScene = {
     this._clock = new THREE.Clock();
 
     // ── 渲染器 ──
-    this._renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
+    this._renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true });
     this._renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this._renderer.setSize(this._wrapper.clientWidth, this._wrapper.clientHeight);
     this._renderer.setClearColor(0x000000, 0);
@@ -42,6 +48,9 @@ const ARThreeScene = {
       'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:auto;z-index:5;touch-action:manipulation;';
     this._renderer.domElement.classList.add('ar-three-canvas');
     this._wrapper.appendChild(this._renderer.domElement);
+
+    // ── Bloom 后处理管线 ──
+    this._initBloomPipeline();
 
     // ── 场景 ──
     this._scene = new THREE.Scene();
@@ -82,6 +91,78 @@ const ARThreeScene = {
     this._bindResize();
 
     return true;
+  },
+
+  // ── Bloom 后处理管线（手动两遍渲染） ──
+  _initBloomPipeline() {
+    // 1/4分辨率渲染目标 — 只捕获亮部做Bloom
+    var bw = Math.floor(this._wrapper.clientWidth / 4);
+    var bh = Math.floor(this._wrapper.clientHeight / 4);
+    this._bloomTarget = new THREE.WebGLRenderTarget(bw, bh, {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      format: THREE.RGBAFormat,
+    });
+
+    // Bloom叠加Canvas（用CSS mix-blend-mode实现发光叠加）
+    var bloomCanvas = document.createElement('canvas');
+    bloomCanvas.className = 'ar-bloom-overlay';
+    bloomCanvas.width = bw;
+    bloomCanvas.height = bh;
+    bloomCanvas.style.cssText =
+      'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:4;mix-blend-mode:screen;filter:blur(8px) brightness(1.5);opacity:0.6;';
+    this._wrapper.appendChild(bloomCanvas);
+    this._bloomCanvas = bloomCanvas;
+    this._bloomCtx = bloomCanvas.getContext('2d');
+
+    // 色差叠加Canvas
+    var caCanvas = document.createElement('canvas');
+    caCanvas.className = 'ar-ca-overlay';
+    caCanvas.style.cssText =
+      'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:3;mix-blend-mode:screen;opacity:0.08;filter:blur(1px) hue-rotate(-20deg);';
+    this._wrapper.appendChild(caCanvas);
+    this._caCanvas = caCanvas;
+    this._caCtx = caCanvas.getContext('2d');
+  },
+
+  _applyBloom() {
+    if (!this._bloomTarget || !this._bloomCtx) return;
+
+    // 1. 渲染场景到低分辨率目标
+    var origTarget = this._renderer.getRenderTarget();
+    this._renderer.setRenderTarget(this._bloomTarget);
+    this._renderer.render(this._scene, this._camera);
+    this._renderer.setRenderTarget(origTarget);
+
+    // 2. 读取像素
+    var bw = this._bloomTarget.width;
+    var bh = this._bloomTarget.height;
+    var pixels = new Uint8Array(bw * bh * 4);
+    this._renderer.readRenderTargetPixels(this._bloomTarget, 0, 0, bw, bh, pixels);
+
+    // 3. 阈值过滤（只保留亮部）+ 写入Bloom Canvas
+    this._bloomCanvas.width = bw;
+    this._bloomCanvas.height = bh;
+    var imageData = this._bloomCtx.createImageData(bw, bh);
+    var threshold = 0.4;
+    for (var i = 0; i < pixels.length; i += 4) {
+      var brightness = (pixels[i] + pixels[i + 1] + pixels[i + 2]) / (255 * 3);
+      if (brightness > threshold) {
+        var factor = (brightness - threshold) / (1 - threshold);
+        imageData.data[i] = pixels[i] * factor;
+        imageData.data[i + 1] = pixels[i + 1] * factor;
+        imageData.data[i + 2] = pixels[i + 2] * factor;
+        imageData.data[i + 3] = 255 * factor * 0.8;
+      }
+    }
+    this._bloomCtx.putImageData(imageData, 0, 0);
+
+    // 4. 色差偏移（用Bloom的低分辨率副本偏移红/蓝通道）
+    if (this._caCtx) {
+      this._caCanvas.width = bw;
+      this._caCanvas.height = bh;
+      this._caCtx.putImageData(imageData, 0, 0);
+    }
   },
 
   // ── 屏幕空间特效叠加（CSS Canvas） ──
@@ -437,6 +518,65 @@ const ARThreeScene = {
     return tex;
   },
 
+  // ── 粒子风暴爆发（信封解锁时） ──
+  _burstParticles(center) {
+    var count = 40;
+    for (var i = 0; i < count; i++) {
+      var angle = (i / count) * Math.PI * 2;
+      var speed = 0.8 + Math.random() * 2.5;
+      var life = 0.6 + Math.random() * 1.2;
+      this._stormParticles.push({
+        x: center.x,
+        y: center.y,
+        z: center.z,
+        vx: Math.cos(angle) * speed * (0.5 + Math.random()),
+        vy: (Math.random() - 0.3) * speed * 1.5,
+        vz: Math.sin(angle) * speed * (0.5 + Math.random()),
+        life: life,
+        maxLife: life,
+      });
+    }
+    // 限制总数
+    if (this._stormParticles.length > 200) {
+      this._stormParticles.splice(0, this._stormParticles.length - 200);
+    }
+  },
+
+  _updateStormParticles(dt) {
+    if (!this._stormParticles.length) return;
+    // 渐变更新
+    for (var i = this._stormParticles.length - 1; i >= 0; i--) {
+      var p = this._stormParticles[i];
+      p.life -= dt;
+      if (p.life <= 0) { this._stormParticles.splice(i, 1); continue; }
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.z += p.vz * dt;
+      p.vy += 0.5 * dt; // 微重力
+    }
+  },
+
+  _renderStormParticles(ctx, w, h) {
+    if (!this._stormParticles.length || !ctx) return;
+    for (var i = 0; i < this._stormParticles.length; i++) {
+      var p = this._stormParticles[i];
+      var alpha = p.life / p.maxLife;
+      // 投影到屏幕（简化：粒子在相机前方10单位处）
+      var sx = (p.x / 10) * w * 0.5 + w / 2;
+      var sy = -(p.y / 10) * h * 0.5 + h * 0.45;
+      var size = 2 + alpha * 4;
+      ctx.save();
+      ctx.globalAlpha = alpha * 0.9;
+      ctx.fillStyle = '#ffd700';
+      ctx.shadowColor = '#d4a853';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(sx, sy, size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  },
+
   _updateParticles(dt, time) {
     if (!this._particles) return;
     var pos = this._particles.geometry.attributes.position;
@@ -507,6 +647,13 @@ const ARThreeScene = {
 
       var isTier4 = ud.tier >= 4;
       var isTier3 = ud.tier >= 3;
+
+      // 首次进入Tier4触发粒子风暴
+      if (isTier4 && !ud._wasTier4) {
+        this._burstParticles(group.position.clone());
+        ud._wasTier4 = true;
+      }
+      if (!isTier4) ud._wasTier4 = false;
 
       // ── Tier 4: 解锁状态 ──
       if (isTier4) {
@@ -583,9 +730,17 @@ const ARThreeScene = {
 
       self._animateEnvelopes(dt);
       self._updateParticles(dt, time);
+      self._updateStormParticles(dt);
       self._updateFXOverlay(dt);
 
+      // 在FX叠加层上渲染粒子风暴
+      if (self._fxCtx && self._stormParticles.length > 0) {
+        self._renderStormParticles(self._fxCtx,
+          self._wrapper.clientWidth, self._wrapper.clientHeight);
+      }
+
       if (self._renderer && self._scene && self._camera) {
+        self._applyBloom();
         self._renderer.render(self._scene, self._camera);
       }
     }
@@ -629,9 +784,17 @@ const ARThreeScene = {
   _bindResize() {
     this._resizeHandler = function() {
       if (!this._renderer || !this._camera || !this._wrapper) return;
-      this._renderer.setSize(this._wrapper.clientWidth, this._wrapper.clientHeight);
-      this._camera.aspect = this._wrapper.clientWidth / this._wrapper.clientHeight;
+      var w = this._wrapper.clientWidth;
+      var h = this._wrapper.clientHeight;
+      this._renderer.setSize(w, h);
+      this._camera.aspect = w / h;
       this._camera.updateProjectionMatrix();
+      // 重建Bloom目标
+      if (this._bloomTarget) { this._bloomTarget.dispose(); }
+      var bw = Math.floor(w / 4), bh = Math.floor(h / 4);
+      this._bloomTarget = new THREE.WebGLRenderTarget(bw, bh, {
+        minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat,
+      });
     }.bind(this);
     window.addEventListener('resize', this._resizeHandler);
     window.addEventListener('orientationchange', this._resizeHandler);
@@ -664,6 +827,9 @@ const ARThreeScene = {
       this._scene.remove(this._sealLight);
       this._sealLight = null;
     }
+    if (this._bloomTarget) { this._bloomTarget.dispose(); this._bloomTarget = null; }
+    if (this._bloomCanvas) { this._bloomCanvas.remove(); this._bloomCanvas = null; this._bloomCtx = null; }
+    if (this._caCanvas) { this._caCanvas.remove(); this._caCanvas = null; this._caCtx = null; }
     if (this._fxOverlay) {
       this._fxOverlay.remove();
       this._fxOverlay = null;

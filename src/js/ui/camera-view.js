@@ -2,7 +2,6 @@
 const CameraView = {
   _container: null,
   _video: null,
-  _canvas: null,
   _stream: null,
   _sampleTimer: null,
   _targetLetter: null,
@@ -28,7 +27,6 @@ const CameraView = {
         </div>
         <div class="camera-preview-wrapper">
           <video id="camera-video" autoplay playsinline muted></video>
-          <canvas id="camera-overlay" class="camera-overlay"></canvas>
           <div class="camera-ar-layer" id="camera-ar-layer"></div>
           <div class="camera-radar" id="camera-radar"></div>
         </div>
@@ -52,7 +50,12 @@ const CameraView = {
     `;
 
     await this._startCamera();
-    this._startOrientationTracking();
+    // iOS 13+ 需要用户手势触发权限请求
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      this._showOrientationPermissionPrompt();
+    } else {
+      this._startOrientationTracking();
+    }
     this._bindEvents(container);
 
     this._virtualHeading = 0;
@@ -78,10 +81,6 @@ const CameraView = {
       this._video = document.getElementById('camera-video');
       this._video.srcObject = this._stream;
       await this._video.play();
-
-      this._canvas = document.getElementById('camera-overlay');
-      this._canvas.width = this._video.videoWidth || 640;
-      this._canvas.height = this._video.videoHeight || 480;
 
       this._updateGpsIndicator();
       LocationService.onChange(() => this._updateGpsIndicator());
@@ -112,6 +111,38 @@ const CameraView = {
   },
 
   // ---- 设备方向追踪 ----
+
+  _showOrientationPermissionPrompt() {
+    const arLayer = document.getElementById('camera-ar-layer');
+    if (!arLayer) return;
+    arLayer.innerHTML = `
+      <div class="camera-perm-overlay">
+        <div class="camera-perm-card">
+          <div class="camera-perm-icon">🧭</div>
+          <h3 class="camera-perm-title">允许使用方向传感器</h3>
+          <p class="camera-perm-desc">需要访问设备方向才能在AR中看到漂浮的信封</p>
+          <button class="camera-perm-btn" id="btn-orientation-perm">允许</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('btn-orientation-perm').addEventListener('click', () => {
+      this._handleOrientationPermission();
+    });
+  },
+
+  async _handleOrientationPermission() {
+    try {
+      const granted = await DeviceOrientationEvent.requestPermission();
+      if (granted === 'granted') {
+        const arLayer = document.getElementById('camera-ar-layer');
+        if (arLayer) arLayer.innerHTML = '';
+        this._startOrientationTracking();
+      }
+    } catch (e) {
+      console.warn('方向权限请求失败:', e);
+      // 优雅降级：使用虚拟朝向
+    }
+  },
 
   _startOrientationTracking() {
     this._stopOrientationTracking();
@@ -214,10 +245,8 @@ const CameraView = {
     this._handleResize = () => {
       if (!this._stream) return;
       const video = document.getElementById('camera-video');
-      const canvas = document.getElementById('camera-overlay');
-      if (video && canvas && video.videoWidth) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+      if (video && video.videoWidth) {
+        video.play().catch(() => {});
       }
     };
     window.addEventListener('resize', this._handleResize);
@@ -300,7 +329,8 @@ const CameraView = {
         alignmentPercent = 100;
       }
 
-      const tier = alignmentPercent < 30 ? 1 : alignmentPercent < 60 ? 2 : alignmentPercent < 90 ? 3 : 4;
+      const alignGoal = CONFIG.FEATURE.ALIGNMENT_THRESHOLD * 100;
+      const tier = alignmentPercent < 30 ? 1 : alignmentPercent < 60 ? 2 : alignmentPercent < alignGoal ? 3 : 4;
       return { letter, d, bearing, distRatio, alignmentPercent, tier };
     });
 
@@ -365,7 +395,7 @@ const CameraView = {
 
     // 渲染键：仅当信封位置/状态变化时才重建DOM，消除闪烁
     const renderKey = onScreenLetters.map(r =>
-      `${r.letter.id}:${Math.round(r.xPercent / 3)}:${r.tier}:${r.alignmentPercent >= 90 ? 1 : 0}`
+      `${r.letter.id}:${Math.round(r.xPercent / 3)}:${r.tier}:${r.alignmentPercent >= CONFIG.FEATURE.ALIGNMENT_THRESHOLD * 100 ? 1 : 0}`
     ).join('|');
     if (renderKey === this._lastRenderKey && this._lastRenderKey !== '') return;
     this._lastRenderKey = renderKey;
@@ -395,7 +425,7 @@ const CameraView = {
   _renderAREnvelope(r, index, total) {
     const { letter, d, diff, onScreen, xPercent, distRatio, alignmentPercent, tier, isCentered } = r;
     const typeIcon = { public: '📮', self_capsule: '⏳', secret: '🔒' }[letter.type];
-    const unlocked = alignmentPercent >= 90;
+    const unlocked = alignmentPercent >= CONFIG.FEATURE.ALIGNMENT_THRESHOLD * 100;
     const focused = isCentered && alignmentPercent > 0;
 
     // 3D 深度
@@ -608,7 +638,7 @@ const CameraView = {
     const label = document.getElementById('alignment-percent');
     if (fill) fill.style.width = `${percent}%`;
     if (label) label.textContent = `${percent}%`;
-    if (fill) fill.classList.toggle('success', percent >= 90);
+    if (fill) fill.classList.toggle('success', percent >= CONFIG.FEATURE.ALIGNMENT_THRESHOLD * 100);
   },
 
   // ---- 拍照 ----
@@ -702,7 +732,6 @@ const CameraView = {
       this._stream = null;
     }
     this._video = null;
-    this._canvas = null;
     this._targetLetter = null;
     this._nearbyLetters = [];
     this._letterCache = [];

@@ -168,7 +168,29 @@ const CollectionView = {
     grid.innerHTML = this._renderGrid(letters);
     const cards = grid.querySelectorAll('.envelope-card');
     AnimationEngine.staggerFadeIn(Array.from(cards), 30, 300);
-    this._bindEvents(this._container, { myLetters, discovered, capsules });
+    // 只重新绑定卡片事件，不绑定顶栏持久元素（避免重复绑定额外回调）
+    this._bindCardEvents(grid, { myLetters, discovered, capsules });
+  },
+
+  _bindCardEvents(grid, { myLetters, discovered, capsules }) {
+    grid.querySelectorAll('.envelope-card').forEach(card => {
+      card.addEventListener('click', () => {
+        SoundEngine.playUIClick();
+        App.navigateTo('read', { letterId: card.dataset.id });
+      });
+      let longPressTimer;
+      card.addEventListener('touchstart', () => {
+        longPressTimer = setTimeout(() => {
+          const id = card.dataset.id;
+          const letter = [...myLetters, ...discovered, ...capsules].find(l => l.id === id);
+          if (letter && letter.sender.nickname === StorageService.getUserSettings().nickname) {
+            this._confirmDelete(id, this._container);
+          }
+        }, 600);
+      });
+      card.addEventListener('touchend', () => clearTimeout(longPressTimer));
+      card.addEventListener('touchmove', () => clearTimeout(longPressTimer));
+    });
   },
 
   _getActiveLetters(myLetters, discovered, capsules) {

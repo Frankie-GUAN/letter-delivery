@@ -27,7 +27,10 @@
       "Bash(taskkill //F //IM node.exe)",
       "Bash(curl -k -s -o /dev/null -w \"Home: HTTP %{http_code}\\\\n\" \"https://localhost:3457/\")",
       "Bash(bash *)",
-      "Bash(npm list *)"
+      "Bash(npm list *)",
+      "Bash(NODE_PATH=\"C:/Users/asus/AppData/Roaming/npm/node_modules\" node *)",
+      "Bash(python *)",
+      "Bash(python3 *)"
     ]
   }
 }

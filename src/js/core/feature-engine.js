@@ -26,14 +26,14 @@ const FeatureEngine = {
   },
 
   // 提取单个网格单元的特征
-  _extractCellFeatures(pixels, imageW, startX, startY, w, h) {
+  _extractCellFeatures(pixels, imageSize, startX, startY, w, h) {
     let sumH = 0, sumS = 0, sumV = 0, count = 0;
     const edgeBins = new Array(CONFIG.FEATURE.SOBEL_BINS).fill(0);
     let sumLaplacian = 0;
 
-    for (let y = startY; y < startY + h && y < imageW; y++) {
-      for (let x = startX; x < startX + w && x < imageW; x++) {
-        const idx = (y * imageW + x) * 4;
+    for (let y = startY; y < startY + h && y < imageSize; y++) {
+      for (let x = startX; x < startX + w && x < imageSize; x++) {
+        const idx = (y * imageSize + x) * 4;
         const r = pixels[idx] / 255;
         const g = pixels[idx + 1] / 255;
         const b = pixels[idx + 2] / 255;
@@ -62,14 +62,14 @@ const FeatureEngine = {
 
         // Sobel边缘（仅对非边缘像素计算）
         if (x > startX && x < startX + w - 1 && y > startY && y < startY + h - 1) {
-          const tl = this._luminance(pixels, (y - 1) * imageW + (x - 1));
-          const tc = this._luminance(pixels, (y - 1) * imageW + x);
-          const tr = this._luminance(pixels, (y - 1) * imageW + (x + 1));
-          const ml = this._luminance(pixels, y * imageW + (x - 1));
-          const mr = this._luminance(pixels, y * imageW + (x + 1));
-          const bl = this._luminance(pixels, (y + 1) * imageW + (x - 1));
-          const bc = this._luminance(pixels, (y + 1) * imageW + x);
-          const br = this._luminance(pixels, (y + 1) * imageW + (x + 1));
+          const tl = this._luminance(pixels, (y - 1) * imageSize + (x - 1));
+          const tc = this._luminance(pixels, (y - 1) * imageSize + x);
+          const tr = this._luminance(pixels, (y - 1) * imageSize + (x + 1));
+          const ml = this._luminance(pixels, y * imageSize + (x - 1));
+          const mr = this._luminance(pixels, y * imageSize + (x + 1));
+          const bl = this._luminance(pixels, (y + 1) * imageSize + (x - 1));
+          const bc = this._luminance(pixels, (y + 1) * imageSize + x);
+          const br = this._luminance(pixels, (y + 1) * imageSize + (x + 1));
 
           const gx = -tl - 2 * ml - bl + tr + 2 * mr + br;
           const gy = -tl - 2 * tc - tr + bl + 2 * bc + br;
@@ -83,11 +83,11 @@ const FeatureEngine = {
 
           // Laplacian
           sumLaplacian += Math.abs(
-            4 * this._luminance(pixels, y * imageW + x)
-            - this._luminance(pixels, (y - 1) * imageW + x)
-            - this._luminance(pixels, (y + 1) * imageW + x)
-            - this._luminance(pixels, y * imageW + (x - 1))
-            - this._luminance(pixels, y * imageW + (x + 1))
+            4 * this._luminance(pixels, y * imageSize + x)
+            - this._luminance(pixels, (y - 1) * imageSize + x)
+            - this._luminance(pixels, (y + 1) * imageSize + x)
+            - this._luminance(pixels, y * imageSize + (x - 1))
+            - this._luminance(pixels, y * imageSize + (x + 1))
           );
         }
       }

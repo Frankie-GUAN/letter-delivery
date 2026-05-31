@@ -174,7 +174,7 @@ app.post('/api/sync', (req, res) => {
     }
 
     const syncTimestamp = lastSync || 0;
-    const newLetters = serverLetters.filter(l => l.created > syncTimestamp);
+    const newLetters = serverLetters.filter(l => l.created >= syncTimestamp);
 
     res.json({
       success: true,
@@ -253,7 +253,7 @@ app.get('/api/notifications/check', (req, res) => {
       !l.secret.openedBy.includes(nickname)
     );
 
-    if (nearbySecrets.length > 0 && userLat && userLng) {
+    if (nearbySecrets.length > 0 && userLat != null && userLng != null && !isNaN(userLat) && !isNaN(userLng)) {
       nearbySecrets.forEach(l => {
         const d = haversine(userLat, userLng, l.location.lat, l.location.lng);
         if (d <= (l.location.radius || 20)) {
@@ -273,7 +273,7 @@ app.get('/api/notifications/check', (req, res) => {
       l.capsule &&
       now >= l.capsule.unlockAt &&
       !l.capsule.openedBy.includes(nickname) &&
-      (l.sender.nickname === nickname || l.capsule.coBuryWith.includes(nickname))
+      (l.sender.nickname === nickname || (l.capsule.coBuryWith && l.capsule.coBuryWith.includes(nickname)))
     );
 
     dueCapsules.forEach(l => {
@@ -289,7 +289,7 @@ app.get('/api/notifications/check', (req, res) => {
       l.type === 'self_capsule' &&
       l.capsule &&
       l.capsule.allOpened &&
-      (l.sender.nickname === nickname || l.capsule.coBuryWith.includes(nickname))
+      (l.sender.nickname === nickname || (l.capsule.coBuryWith && l.capsule.coBuryWith.includes(nickname)))
     );
 
     coBuried.forEach(l => {

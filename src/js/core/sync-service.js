@@ -108,7 +108,7 @@ const SyncService = {
     // 只保留最近100条记录
     if (shown.size > 100) {
       const arr = Array.from(shown);
-      arr.slice(arr.length - 100).forEach(k => shown.delete(k));
+      arr.slice(0, arr.length - 100).forEach(k => shown.delete(k));
     }
     localStorage.setItem('cikecidi_notified', JSON.stringify(Array.from(shown)));
 

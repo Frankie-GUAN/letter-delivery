@@ -18,14 +18,6 @@ const ApiService = {
     return this._online;
   },
 
-  // 获取附近信件
-  async getNearbyLetters(lat, lng, radius = 50) {
-    const url = `${this._baseURL}/api/letters/nearby?lat=${lat}&lng=${lng}&radius=${radius}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('获取附近信件失败');
-    return res.json();
-  },
-
   // 双向同步
   async sync(localLetters, lastSync) {
     const res = await fetch(`${this._baseURL}/api/sync`, {

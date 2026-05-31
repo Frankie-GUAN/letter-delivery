@@ -137,6 +137,7 @@ app.post('/api/letters/:id/reply', (req, res) => {
     if (!letter) return res.status(404).json({ error: '信件不存在' });
 
     reply.time = reply.time || Date.now();
+    if (!letter.replies) letter.replies = [];
     letter.replies.push(reply);
 
     writeJSON(LETTERS_FILE, letters);
@@ -242,8 +243,8 @@ app.get('/api/notifications/check', (req, res) => {
     const nearbySecrets = letters.filter(l =>
       l.type === 'secret' &&
       l.secret &&
-      l.secret.recipients.includes(nickname) &&
-      !l.secret.openedBy.includes(nickname)
+      l.secret.recipients?.includes(nickname) &&
+      !l.secret.openedBy?.includes(nickname)
     );
 
     if (nearbySecrets.length > 0 && userLat != null && userLng != null && !isNaN(userLat) && !isNaN(userLng)) {
@@ -265,7 +266,7 @@ app.get('/api/notifications/check', (req, res) => {
       l.type === 'self_capsule' &&
       l.capsule &&
       now >= l.capsule.unlockAt &&
-      !l.capsule.openedBy.includes(nickname) &&
+      !l.capsule.openedBy?.includes(nickname) &&
       (l.sender.nickname === nickname || (l.capsule.coBuryWith && l.capsule.coBuryWith.includes(nickname)))
     );
 
@@ -298,18 +299,6 @@ app.get('/api/notifications/check', (req, res) => {
   } catch (e) {
     console.error('通知检查失败:', e);
     res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// CA证书下载（手机安装用）
-app.get('/ca', (req, res) => {
-  const caPath = path.join(__dirname, 'rootCA.pem');
-  if (fs.existsSync(caPath)) {
-    res.setHeader('Content-Type', 'application/x-pem-file');
-    res.setHeader('Content-Disposition', 'attachment; filename="cikecidi-ca.pem"');
-    res.sendFile(caPath);
-  } else {
-    res.status(404).send('CA cert not found');
   }
 });
 

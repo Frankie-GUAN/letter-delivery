@@ -19,12 +19,6 @@ const SyncService = {
     this._startNotifyLoop();
   },
 
-  stop() {
-    this._stopSyncLoop();
-    this._stopNotifyLoop();
-    this._stopRetryLoop();
-  },
-
   _startRetryLoop() {
     this._stopRetryLoop();
     this._retryTimer = setInterval(() => {

@@ -54,8 +54,6 @@ src/
     │   ├── api-service.js              # 后端API客户端（信件/同步/通知）
     │   ├── sync-service.js             # 双向同步循环 + 推送通知检查
     │   └── letter-manager.js           # 信件业务逻辑（创建公开信/胶囊/密信/回响）
-    ├── ar/
-    │   └── ar-engine.js                # Canvas 2D AR引擎（陀螺仪+requestAnimationFrame+空间投影）
     ├── fx/
     │   ├── animation-engine.js         # 前端动画引擎（粒子/尘埃/交错淡入）
     │   └── ar-three-scene.js           # Three.js 3D AR场景（WebGL渲染信封/光晕/粒子）
@@ -101,11 +99,10 @@ server/
 
 ## AR 系统
 
-项目包含两套可选 AR 引擎，camera-view 优先使用 Three.js 方案：
+AR 基于 Three.js WebGL 引擎，camera-view 在支持 WebGL 的设备上自动启用 3D 渲染：
 
 | 引擎 | 文件 | 技术 | 特性 |
 |------|------|------|------|
-| Canvas AR | `ar-engine.js` | Canvas 2D + DeviceOrientation | 轻量、兼容性好、罗盘条、雷达扫描 |
 | Three.js AR | `ar-three-scene.js` | WebGL + Three.js 0.160 | 3D信封建模、光照、粒子特效、射线检测 |
 
 **AR 核心能力（看齐 Pokémon GO）：**
@@ -179,7 +176,7 @@ npm start
 - HTTPS 环境（摄像头需要安全上下文；localhost 除外）
 - 移动端需要 DeviceOrientation API 支持（AR 体验）
 - Node.js 14+（后端服务）
-- Three.js 0.160（CDN 引入）
+- Three.js 0.160（本地 vendor 引入）
 
 ---
 

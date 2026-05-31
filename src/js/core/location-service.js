@@ -52,14 +52,6 @@ const LocationService = {
     );
   },
 
-  // 停止监听
-  stop() {
-    if (this._watchId !== null) {
-      navigator.geolocation.clearWatch(this._watchId);
-      this._watchId = null;
-    }
-  },
-
   // 模拟定位（Demo/桌面调试用）
   _simulated: null,
 
@@ -71,10 +63,6 @@ const LocationService = {
   clearSimulatedPosition() {
     this._simulated = null;
     if (this._current) this._notifyListeners();
-  },
-
-  isSimulated() {
-    return !!this._simulated;
   },
 
   // 获取上次已知位置（模拟优先）
@@ -94,13 +82,10 @@ const LocationService = {
     this._listeners.push(fn);
   },
 
-  removeListener(fn) {
-    this._listeners = this._listeners.filter(l => l !== fn);
-  },
-
   _notifyListeners() {
+    const pos = this.getCurrent();
     this._listeners.forEach(fn => {
-      try { fn(this._current); } catch (e) { console.warn('位置监听器异常:', e); }
+      try { fn(pos); } catch (e) { console.warn('位置监听器异常:', e); }
     });
   },
 };

@@ -109,29 +109,6 @@ const SoundEngine = {
     osc.stop(now + attack + decay + 0.05);
   },
 
-  // 和声音生成
-  _createChime(notes, noteDuration = 0.12, gap = 0.06) {
-    const ctx = this._getContext();
-    if (!ctx) return;
-    const now = ctx.currentTime;
-
-    notes.forEach((freq, i) => {
-      const startTime = now + i * (noteDuration + gap);
-      const osc = ctx.createOscillator();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, startTime);
-
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(this._volume * 0.15, startTime + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + noteDuration);
-      gain.connect(ctx.destination);
-
-      osc.connect(gain);
-      osc.start(startTime);
-      osc.stop(startTime + noteDuration + 0.05);
-    });
-  },
 
   // ---- 音效 ----
 

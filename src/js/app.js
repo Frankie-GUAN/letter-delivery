@@ -126,10 +126,6 @@ const App = {
     } catch (e) {}
   },
 
-  getCurrentView() {
-    return this._currentView;
-  },
-
   getPreviousView() {
     return this._previousView;
   },

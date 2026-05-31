@@ -306,11 +306,6 @@ html, body {
   animation: simulatePulse 1.5s ease infinite;
 }
 
-@keyframes simulatePulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(196,133,42,0.5); }
-  50% { box-shadow: 0 0 0 12px rgba(196,133,42,0); }
-}
-
 .map-simulate-banner {
   position: absolute;
   top: 48px;
@@ -325,11 +320,6 @@ html, body {
   font-size: 12px;
   color: var(--accent);
   animation: fadeInDown 0.3s ease;
-}
-
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ---- 相机视图 ---- */
@@ -1404,11 +1394,6 @@ html, body {
   animation: fadeInUp 0.6s ease;
 }
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 .setup-header {
   text-align: center;
   margin-bottom: 32px;
@@ -1523,11 +1508,6 @@ html, body {
   animation: fadeIn 0.2s ease;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 .modal-card {
   width: 100%;
   max-width: 340px;
@@ -1609,12 +1589,6 @@ html, body {
 .passphrase-input.error {
   border-color: #e05555;
   animation: shake 0.4s;
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-6px); }
-  75% { transform: translateX(6px); }
 }
 
 .passphrase-error {

@@ -99,12 +99,6 @@ const StorageService = {
     });
   },
 
-  // 按口令查找密信
-  async getLetterByPassphrase(passphrase) {
-    const all = await this.getAllLetters();
-    return all.find(l => l.secret && l.secret.passphrase === passphrase) || null;
-  },
-
   // ---- 用户设置 ----
 
   getUserSettings() {

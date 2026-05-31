@@ -74,20 +74,9 @@
 }
 
 /* ---- 滑入滑出 ---- */
-@keyframes slideUp {
-  from { transform: translateY(100%); opacity: 0; }
-  to   { transform: translateY(0); opacity: 1; }
-}
-
 @keyframes slideDown {
   from { transform: translateY(-100%); opacity: 0; }
   to   { transform: translateY(0); opacity: 1; }
-}
-
-/* ---- 水波纹 ---- */
-@keyframes ripple {
-  0%   { transform: scale(0); opacity: 0.6; }
-  100% { transform: scale(2.5); opacity: 0; }
 }
 
 /* ---- 交错延迟工具 ---- */

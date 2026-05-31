@@ -65,7 +65,4 @@ const AnimationEngine = {
     return dustEl;
   },
 
-  _wait(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  },
 };

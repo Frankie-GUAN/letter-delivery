@@ -216,6 +216,7 @@ const LetterComposer = {
       };
 
       let letter;
+      let recipients = [];
       switch (this._currentType) {
         case 'public': {
           const hasAlignment = document.getElementById('public-alignment').checked;
@@ -238,7 +239,7 @@ const LetterComposer = {
         }
         case 'secret': {
           const recipientsRaw = document.getElementById('secret-recipients').value.trim();
-          const recipients = recipientsRaw ? recipientsRaw.split(/[,，]/).map(s => s.trim()).filter(Boolean) : [];
+          recipients = recipientsRaw ? recipientsRaw.split(/[,，]/).map(s => s.trim()).filter(Boolean) : [];
           photoWithFeatures.hasAlignment = false;
           letter = await LetterManager.createSecret(location, photoWithFeatures, content, recipients);
           break;

@@ -20,7 +20,7 @@ const App = {
       await StorageService.init();
       LocationService.start();
 
-      // 首次使用：使用入门引导
+      // 首次使用 → 入门引导
       const settings = StorageService.getUserSettings();
       if (!settings.nickname) {
         this.navigateTo('onboarding');
@@ -101,7 +101,6 @@ const App = {
     }
 
     const container = document.getElementById('view-container');
-    const direction = this._currentView ? 'forward' : 'forward';
     this._previousView = this._currentView;
     this._currentView = viewName;
     this._viewParams = params;
@@ -113,8 +112,7 @@ const App = {
 
     try {
       this.views[viewName].render(container, params);
-      // 新页面滑入动画
-      try { AnimationEngine.pageEnter(container.firstElementChild, direction); } catch (e) {}
+      try { AnimationEngine.pageEnter(container.firstElementChild, 'forward'); } catch (e) {}
     } catch (e) {
       console.error(`视图 ${viewName} 渲染失败:`, e);
       Helpers.showError();

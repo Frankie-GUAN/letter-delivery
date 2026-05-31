@@ -43,6 +43,17 @@ const MapView = {
   },
 
   async render(container) {
+    // 清理旧地图实例（避免内存泄漏）
+    if (this._map) {
+      try { this._map.destroy(); } catch (e) {}
+      this._map = null;
+    }
+    this._markers = [];
+    this._userMarker = null;
+    this._accuracyCircle = null;
+    this._destMarker = null;
+    this._walkingRoute = null;
+    this._walkingInstance = null;
     this._container = container;
 
     // 首次使用：设置昵称
@@ -663,10 +674,9 @@ const MapView = {
     this._map.setZoomAndCenter(16, [letter.location.lng, letter.location.lat]);
 
     // 清除旧路线
-    if (this._walkingRoute) {
-      this._map.remove(this._walkingRoute);
-      this._walkingRoute = null;
-    }
+    if (this._destMarker) { this._map.remove(this._destMarker); this._destMarker = null; }
+    if (this._walkingInstance) { this._walkingInstance.clear(); this._walkingInstance = null; }
+    this._walkingRoute = null;
 
     // 绘制步行路线
     const startLngLat = [this._currentPos.lng, this._currentPos.lat];
@@ -674,9 +684,9 @@ const MapView = {
 
     AMap.plugin('AMap.Walking', () => {
       const walking = new AMap.Walking({ map: this._map });
+      this._walkingInstance = walking;
       walking.search(startLngLat, endLngLat, (status, result) => {
         if (status === 'complete' && result.routes && result.routes.length > 0) {
-          // 保存路线引用以便后续清除
           this._walkingRoute = result;
         }
       });

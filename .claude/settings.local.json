@@ -62,7 +62,8 @@
       "WebFetch(domain:plugins.trac.wordpress.org)",
       "WebFetch(domain:dev.to)",
       "Bash(sed -i '342s/positions.length/15/' \"E:\\\\桌面\\\\letter\\\\letter-delivery\\\\src\\\\js\\\\utils\\\\qrcode.js\")",
-      "Bash(sed -i '363s/15/positions.length/' \"E:\\\\桌面\\\\letter\\\\letter-delivery\\\\src\\\\js\\\\utils\\\\qrcode.js\")"
+      "Bash(sed -i '363s/15/positions.length/' \"E:\\\\桌面\\\\letter\\\\letter-delivery\\\\src\\\\js\\\\utils\\\\qrcode.js\")",
+      "Bash(echo \"Exit: $?\")"
     ]
   }
 }

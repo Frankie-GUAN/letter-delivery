@@ -131,20 +131,20 @@ const StorageService = {
   },
 
   async markSynced(ids) {
-    const tx = this._db.transaction(CONFIG.STORAGE.LETTERS_STORE, 'readwrite');
-    const store = tx.objectStore(CONFIG.STORAGE.LETTERS_STORE);
-    for (const id of ids) {
-      const letter = await new Promise((resolve) => {
-        const req = store.get(id);
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => resolve(null);
-      });
-      if (letter) {
-        letter._synced = true;
-        store.put(letter);
-      }
-    }
+    // 先用 getAll 在一个事务内完成所有读写，避免 await 在循环中导致事务提前自动提交
+    const allLetters = await this.getAllLetters();
+    const letterMap = new Map(allLetters.map(l => [l.id, l]));
+
     return new Promise((resolve, reject) => {
+      const tx = this._db.transaction(CONFIG.STORAGE.LETTERS_STORE, 'readwrite');
+      const store = tx.objectStore(CONFIG.STORAGE.LETTERS_STORE);
+      for (const id of ids) {
+        const letter = letterMap.get(id);
+        if (letter) {
+          letter._synced = true;
+          store.put(letter);
+        }
+      }
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(new Error('标记同步失败'));
     });

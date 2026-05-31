@@ -3,6 +3,7 @@ const LocationService = {
   _watchId: null,
   _current: null,       // { lat, lng, accuracy, timestamp }
   _listeners: [],
+  _notifiedCached: false,
 
   // 开始监听位置
   start() {
@@ -30,6 +31,7 @@ const LocationService = {
           accuracy: pos.coords.accuracy,
           timestamp: pos.timestamp,
         };
+        this._notifiedCached = false; // GPS成功获取后重置缓存通知标志
         // 缓存位置
         localStorage.setItem('cikecidi_last_position', JSON.stringify(this._current));
         this._notifyListeners();
@@ -80,8 +82,9 @@ const LocationService = {
     return this._simulated || this._current;
   },
 
-  // 位置是否有效（未过期）
+  // 位置是否有效（未过期），模拟定位始终有效
   isValid() {
+    if (this._simulated) return true;
     if (!this._current) return false;
     return (Date.now() - this._current.timestamp) < CONFIG.LOCATION.STALE_THRESHOLD;
   },

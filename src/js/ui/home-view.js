@@ -375,14 +375,18 @@ const HomeView = {
       });
     });
 
-    // 点击空白处关闭
-    document.addEventListener('click', (e) => {
+    // 点击空白处关闭（先移除旧监听再绑定新监听）
+    if (this._fabDocClickHandler) {
+      document.removeEventListener('click', this._fabDocClickHandler);
+    }
+    this._fabDocClickHandler = (e) => {
       if (fabOpen && !e.target.closest('#home-fab')) {
         fabBtn.classList.remove('open');
         fabMenu.classList.remove('open');
         fabOpen = false;
       }
-    });
+    };
+    document.addEventListener('click', this._fabDocClickHandler);
   },
 
   async _showShareModal() {

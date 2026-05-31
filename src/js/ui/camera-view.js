@@ -15,6 +15,7 @@ const CameraView = {
   _fov: 60,
   _lastRenderKey: '',
   _lastOrientationRender: 0,
+  _useThreeJS: false,
 
   async render(container, params = {}) {
     this._container = container;
@@ -102,6 +103,18 @@ const CameraView = {
 
       this._updateGpsIndicator();
       LocationService.onChange(() => this._updateGpsIndicator());
+
+      // 尝试初始化 Three.js AR
+      if (typeof ARThreeScene !== 'undefined' && ARThreeScene.init) {
+        const ok = ARThreeScene.init(this._container);
+        if (ok) {
+          this._useThreeJS = true;
+          ARThreeScene.setClickHandler((letterId) => {
+            this._handleEnvelopeClick(letterId);
+          });
+          ARThreeScene.startLoop();
+        }
+      }
     } catch (e) {
       console.error('摄像头启动失败:', e);
       this._showCameraError();
@@ -434,10 +447,31 @@ const CameraView = {
     const radar = document.getElementById('camera-radar');
 
     if (this._letterCache.length === 0) {
+      if (this._useThreeJS && ARThreeScene) {
+        ARThreeScene.updateEnvelopes([], this._getHeading());
+      }
       if (arLayer) arLayer.innerHTML = '';
       if (noHint) noHint.style.display = 'block';
       if (bar) bar.style.display = 'none';
       if (radar) radar.innerHTML = '';
+      return;
+    }
+
+    // Three.js AR 路径
+    if (this._useThreeJS && ARThreeScene && this._letterCache.length > 0) {
+      const heading = this._getHeading();
+      ARThreeScene.updateEnvelopes(this._letterCache, heading);
+      if (noHint) noHint.style.display = 'none';
+      if (arLayer) arLayer.innerHTML = '';
+      if (radar) radar.innerHTML = '';
+      if (this._bestLetter && this._currentAlignment > 0) {
+        this._updateAlignmentUI(this._currentAlignment);
+        if (bar) bar.style.display = 'block';
+      } else if (this._targetLetter && this._targetLetter.photo.hasAlignment) {
+        if (bar) bar.style.display = 'block';
+      } else {
+        if (bar) bar.style.display = 'none';
+      }
       return;
     }
 
@@ -645,6 +679,29 @@ const CameraView = {
     });
   },
 
+  // ---- Three.js 信封点击处理 ----
+
+  _handleEnvelopeClick(letterId) {
+    const cached = this._letterCache.find(c => c.letter.id === letterId);
+    if (!cached) return;
+    const letter = cached.letter;
+
+    if (letter.type === 'self_capsule' && letter.capsule && Date.now() < letter.capsule.unlockAt) {
+      const remaining = Math.round((letter.capsule.unlockAt - Date.now()) / 86400000);
+      this._showCapsuleLockedHint(letter, remaining);
+      return;
+    }
+    if (letter.type === 'secret') {
+      this._showSecretModal(letter);
+      return;
+    }
+    if (letter.photo.hasAlignment && cached.alignmentPercent < CONFIG.FEATURE.ALIGNMENT_THRESHOLD * 100) {
+      this._targetLetter = letter;
+      return;
+    }
+    this._openLetter(letter);
+  },
+
   // ---- 胶囊锁定提示 ----
 
   _showCapsuleLockedHint(letter, daysRemaining) {
@@ -840,6 +897,10 @@ const CameraView = {
     if (this._handleKeyDown) {
       window.removeEventListener('keydown', this._handleKeyDown);
       this._handleKeyDown = null;
+    }
+    if (this._useThreeJS && typeof ARThreeScene !== 'undefined') {
+      ARThreeScene.destroy();
+      this._useThreeJS = false;
     }
     if (this._stream) {
       this._stream.getTracks().forEach(t => t.stop());

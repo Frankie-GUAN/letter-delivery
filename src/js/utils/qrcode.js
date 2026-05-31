@@ -16,12 +16,12 @@ const QRCode = {
   // EC Level M 下每个纠错块的数据码字数 / EC码字数
   _ecInfo(v) {
     const table = {
-       1: [[16, 10]], 2: [[28, 16]], 3: [[44, 26]],
-       4: [[32, 16], [32, 16]], 5: [[43, 24], [43, 24]],
-       6: [[54, 30], [54, 30]], 7: [[62, 36], [62, 36]],
-       8: [[72, 40], [43, 24], [43, 24]],
-       9: [[76, 44], [61, 28], [61, 28]],
-      10: [[86, 48], [72, 36], [72, 36]],
+       1: [[26, 16]], 2: [[44, 28]], 3: [[70, 44]],
+       4: [[48, 32], [48, 32]], 5: [[67, 43], [67, 43]],
+       6: [[84, 54], [84, 54]], 7: [[98, 62], [98, 62]],
+       8: [[112, 72], [112, 72]],
+       9: [[123, 77], [122, 52], [122, 53]],
+      10: [[138, 86], [136, 65], [136, 65]],
     };
     return table[v];
   },
@@ -48,9 +48,6 @@ const QRCode = {
     // 编码数据
     const dataBits = this._encodeData(text, version);
     this._placeData(matrix, dataBits, 2);
-
-    // 应用掩码
-    this._applyMask(matrix, 2);
 
     return { matrix, count };
   },
@@ -290,6 +287,20 @@ const QRCode = {
     return [6, ...(intervals[version] || []), n - 1 - 6].filter((v, i, arr) => arr.indexOf(v) === i);
   },
 
+
+  _maskCondition(r, c, mask) {
+    switch (mask) {
+      case 0: return (r + c) % 2 === 0;
+      case 1: return r % 2 === 0;
+      case 2: return c % 3 === 0;
+      case 3: return (r + c) % 3 === 0;
+      case 4: return (Math.floor(r / 2) + Math.floor(c / 3)) % 2 === 0;
+      case 5: return (r * c) % 2 + (r * c) % 3 === 0;
+      case 6: return ((r * c) % 2 + (r * c) % 3) % 2 === 0;
+      case 7: return ((r + c) % 2 + (r * c) % 3) % 2 === 0;
+    }
+    return false;
+  },
   _placeData(matrix, dataWords, mask) {
     const n = matrix.length;
     const bits = [];
@@ -313,7 +324,7 @@ const QRCode = {
           const c = col - dc;
           if (c < 0) continue;
           if (matrix[r][c] === null && bitIdx < bits.length) {
-            matrix[r][c] = !!bits[bitIdx];
+            var v = !!bits[bitIdx]; if (this._maskCondition(r, c, mask)) v = !v; matrix[r][c] = v;
             bitIdx++;
           }
         }
@@ -338,7 +349,7 @@ const QRCode = {
       0x48e8, 0x4ddf, 0x4286, 0x47b1, 0x5903, 0x5c34, 0x536d, 0x565a,
       0x7b3e, 0x7e09, 0x7150, 0x7467, 0x6ad5, 0x6fe2, 0x60bb, 0x658c,
     ];
-    const fb = formatBits[mask];
+    const fb = formatBits[8 + mask];
     const n = matrix.length;
 
     const positions = [
@@ -348,10 +359,10 @@ const QRCode = {
       [8, n - 8], [8, n - 7], [8, n - 6], [8, n - 5], [8, n - 4], [8, n - 3], [8, n - 2], [8, n - 1],
     ];
 
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < positions.length; i++) {
       const [r, c] = positions[i] || [];
       if (r != null && c != null && r < n && c < n) {
-        matrix[r][c] = !!((fb >> (14 - i)) & 1);
+        matrix[r][c] = !!((fb >> (14 - (i % 15))) & 1);
       }
     }
   },
@@ -376,30 +387,6 @@ const QRCode = {
     }
   },
 
-  // ---- 掩码 ----
-
-  _applyMask(matrix, mask) {
-    const n = matrix.length;
-    for (let r = 0; r < n; r++) {
-      for (let c = 0; c < n; c++) {
-        if (matrix[r][c] === null) continue;
-        let invert = false;
-        switch (mask) {
-          case 0: invert = (r + c) % 2 === 0; break;
-          case 1: invert = r % 2 === 0; break;
-          case 2: invert = c % 3 === 0; break;
-          case 3: invert = (r + c) % 3 === 0; break;
-          case 4: invert = (Math.floor(r / 2) + Math.floor(c / 3)) % 2 === 0; break;
-          case 5: invert = (r * c) % 2 + (r * c) % 3 === 0; break;
-          case 6: invert = ((r * c) % 2 + (r * c) % 3) % 2 === 0; break;
-          case 7: invert = ((r + c) % 2 + (r * c) % 3) % 2 === 0; break;
-        }
-        if (invert && matrix[r][c] !== null) {
-          matrix[r][c] = !matrix[r][c];
-        }
-      }
-    }
-  },
 
   // ---- 工具 ----
 

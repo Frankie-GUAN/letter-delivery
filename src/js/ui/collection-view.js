@@ -60,6 +60,7 @@ const CollectionView = {
     AnimationEngine.staggerFadeIn(Array.from(cards), 40, 350);
 
     // 尘埃粒子
+    if (this._dust && this._dust.parentNode) this._dust.remove();
     this._dust = AnimationEngine.floatingDust(container.querySelector('.collection-view'), 15);
   },
 

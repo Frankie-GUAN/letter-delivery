@@ -143,6 +143,12 @@ html, body {
   margin-top: 12px;
 }
 
+.map-status-text {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-top: 8px;
+}
+
 .map-filters {
   display: flex;
   padding: 10px 16px;
@@ -884,6 +890,13 @@ html, body {
   margin-bottom: 16px;
 }
 
+.hint-sub {
+  font-size: 14px;
+  color: rgba(255,255,255,0.7);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  margin-bottom: 12px;
+}
+
 .camera-error-msg {
   color: #fff;
   font-size: 16px;
@@ -1159,6 +1172,18 @@ html, body {
   object-fit: cover;
   border-radius: var(--radius);
   border: 2px solid rgba(59,46,26,0.08);
+}
+
+.reader-photo-fallback {
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+  background: var(--bg-alt);
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
 }
 
 .reader-location {

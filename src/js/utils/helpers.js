@@ -96,6 +96,11 @@ const Helpers = {
     }
   },
 
+  hideError() {
+    const el = document.getElementById('error-screen');
+    if (el) el.style.display = 'none';
+  },
+
   // 计算用户成就
   getAchievements(allLetters, nickname) {
     if (!nickname) return [];

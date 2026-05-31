@@ -210,6 +210,18 @@ const CameraView = {
         this._captureAndCompose();
       });
     }
+
+    this._handleResize = () => {
+      if (!this._stream) return;
+      const video = document.getElementById('camera-video');
+      const canvas = document.getElementById('camera-overlay');
+      if (video && canvas && video.videoWidth) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+      }
+    };
+    window.addEventListener('resize', this._handleResize);
+    window.addEventListener('orientationchange', this._handleResize);
   },
 
   // ---- 数据循环（1s间隔） ----
@@ -680,6 +692,11 @@ const CameraView = {
   },
 
   _stopCamera() {
+    if (this._handleResize) {
+      window.removeEventListener('resize', this._handleResize);
+      window.removeEventListener('orientationchange', this._handleResize);
+      this._handleResize = null;
+    }
     if (this._stream) {
       this._stream.getTracks().forEach(t => t.stop());
       this._stream = null;

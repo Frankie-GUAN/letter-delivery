@@ -91,6 +91,10 @@ const LocationService = {
     this._listeners.push(fn);
   },
 
+  removeListener(fn) {
+    this._listeners = this._listeners.filter(l => l !== fn);
+  },
+
   _notifyListeners() {
     this._listeners.forEach(fn => {
       try { fn(this._current); } catch (e) { console.warn('位置监听器异常:', e); }

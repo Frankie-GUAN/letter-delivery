@@ -2,6 +2,7 @@
 const SyncService = {
   _syncTimer: null,
   _notifyTimer: null,
+  _retryTimer: null,
   _lastSync: 0,
   _syncInterval: CONFIG.SYNC.INTERVAL,
   _notifyInterval: CONFIG.SYNC.NOTIFY_INTERVAL,
@@ -9,7 +10,8 @@ const SyncService = {
   // 启动同步循环
   start() {
     if (!ApiService.isOnline()) {
-      console.warn('后端服务不可用，同步未启动');
+      console.warn('后端服务不可用，30s 后重试...');
+      this._startRetryLoop();
       return;
     }
     this._lastSync = parseInt(localStorage.getItem('cikecidi_last_sync') || '0');
@@ -20,6 +22,27 @@ const SyncService = {
   stop() {
     this._stopSyncLoop();
     this._stopNotifyLoop();
+    this._stopRetryLoop();
+  },
+
+  _startRetryLoop() {
+    this._stopRetryLoop();
+    this._retryTimer = setInterval(() => {
+      if (ApiService.isOnline()) {
+        console.log('后端服务已恢复，启动同步');
+        this._stopRetryLoop();
+        this._lastSync = parseInt(localStorage.getItem('cikecidi_last_sync') || '0');
+        this._startSyncLoop();
+        this._startNotifyLoop();
+      }
+    }, 30000);
+  },
+
+  _stopRetryLoop() {
+    if (this._retryTimer) {
+      clearInterval(this._retryTimer);
+      this._retryTimer = null;
+    }
   },
 
   _startSyncLoop() {
@@ -131,7 +154,7 @@ const SyncService = {
     banner.textContent = `📮 ${message}`;
     banner.style.cssText = `
       position: fixed; top: 0; left: 0; right: 0;
-      background: #d4a853; color: #1a1815;
+      background: var(--accent, #c4852a); color: var(--surface, #fff9f0);
       text-align: center; padding: 14px 16px;
       padding-top: max(14px, env(safe-area-inset-top));
       font-size: 14px; font-weight: 600;
@@ -146,18 +169,6 @@ const SyncService = {
       if (banner.parentNode) banner.remove();
     }, 5000);
 
-    // 注入动画
-    if (!document.getElementById('sync-banner-style')) {
-      const style = document.createElement('style');
-      style.id = 'sync-banner-style';
-      style.textContent = `
-        @keyframes slideDown {
-          from { transform: translateY(-100%); }
-          to { transform: translateY(0); }
-        }
-      `;
-      document.head.appendChild(style);
-    }
   },
 
   // 请求通知权限

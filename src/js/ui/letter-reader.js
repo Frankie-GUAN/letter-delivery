@@ -78,7 +78,10 @@ const LetterReader = {
         </div>
         <div class="reader-body">
           <div class="reader-photo-section">
-            <img src="${letter.photo.thumbnail || letter.photo.dataURL}" alt="信的照片" class="reader-photo">
+            ${(letter.photo.thumbnail || letter.photo.dataURL)
+              ? `<img src="${letter.photo.thumbnail || letter.photo.dataURL}" alt="信的照片" class="reader-photo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">`
+              : ''}
+            <div class="reader-photo-fallback" style="${(letter.photo.thumbnail || letter.photo.dataURL) ? 'display:none' : 'display:flex'}">💌</div>
             <div class="reader-location">📍 ${Helpers.escapeHtml(letter.location.name || '某个地方')}</div>
           </div>
           ${capsuleStatusHtml}

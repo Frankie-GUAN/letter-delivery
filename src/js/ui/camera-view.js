@@ -74,13 +74,31 @@ const CameraView = {
 
   async _startCamera() {
     try {
-      this._stream = await navigator.mediaDevices.getUserMedia({
+      const constraints = {
         video: { facingMode: CONFIG.CAMERA.FACING_MODE, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
-      });
+      };
+      try {
+        this._stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (e1) {
+        // 降级：放宽分辨率限制
+        console.warn('高分辨率摄像头不可用，尝试降级:', e1.message);
+        constraints.video.width = { ideal: 640 };
+        constraints.video.height = { ideal: 480 };
+        this._stream = await navigator.mediaDevices.getUserMedia(constraints);
+      }
       this._video = document.getElementById('camera-video');
       this._video.srcObject = this._stream;
-      await this._video.play();
+      this._video.setAttribute('playsinline', '');
+      this._video.setAttribute('muted', '');
+      try {
+        await this._video.play();
+      } catch (playErr) {
+        // iOS 可能需要用户手势才能播放，提供手动启动按钮
+        console.warn('自动播放失败，等待用户手势:', playErr.message);
+        this._showPlayButton();
+        return;
+      }
 
       this._updateGpsIndicator();
       LocationService.onChange(() => this._updateGpsIndicator());
@@ -88,6 +106,31 @@ const CameraView = {
       console.error('摄像头启动失败:', e);
       this._showCameraError();
     }
+  },
+
+  _showPlayButton() {
+    const wrapper = document.querySelector('.camera-preview-wrapper');
+    if (!wrapper) return;
+    const btn = document.createElement('button');
+    btn.id = 'btn-start-preview';
+    btn.textContent = '📷 点击启动相机';
+    btn.style.cssText = `
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: var(--accent, #c4852a); color: #fff; border: none;
+      border-radius: 12px; padding: 16px 32px; font-size: 18px;
+      font-family: sans-serif; z-index: 30; cursor: pointer;
+    `;
+    btn.addEventListener('click', async () => {
+      btn.remove();
+      try {
+        await this._video.play();
+        this._updateGpsIndicator();
+        LocationService.onChange(() => this._updateGpsIndicator());
+      } catch (err) {
+        this._showCameraError();
+      }
+    }, { once: true });
+    wrapper.appendChild(btn);
   },
 
   // ---- 朝向获取 ----
@@ -132,14 +175,14 @@ const CameraView = {
 
   async _handleOrientationPermission() {
     try {
-      const granted = await DeviceOrientationEvent.requestPermission();
-      if (granted === 'granted') {
-        this._startOrientationTracking();
+      const result = await DeviceOrientationEvent.requestPermission();
+      if (result !== 'granted') {
+        console.warn('方向权限被拒，使用虚拟朝向降级');
       }
     } catch (e) {
       console.warn('方向权限请求失败:', e);
     }
-    // 无论结果如何，清除权限提示遮罩并继续（使用虚拟朝向降级）
+    // 无论结果如何，清除权限提示遮罩并继续（支持设备使用真实朝向，不支持则用虚拟朝向降级）
     const arLayer = document.getElementById('camera-ar-layer');
     if (arLayer) arLayer.innerHTML = '';
     this._startOrientationTracking();

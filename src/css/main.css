@@ -357,6 +357,7 @@ html, body {
   align-items: center;
   padding: 16px;
   padding-top: max(16px, env(safe-area-inset-top));
+  padding-top: max(16px, env(safe-area-inset-top));
 }
 
 .camera-back-btn {
@@ -420,7 +421,9 @@ html, body {
   z-index: 2;
   pointer-events: none;
   perspective: 800px;
+  -webkit-perspective: 800px;
   perspective-origin: center center;
+  -webkit-perspective-origin: center center;
   overflow: hidden;
 }
 
@@ -477,6 +480,8 @@ html, body {
   z-index: var(--zi, 10);
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -ms-touch-action: manipulation;
   transform-style: preserve-3d;
   transform: translate(-50%, -50%) translateZ(var(--tz, 0px));
   opacity: var(--op, 1);
@@ -488,6 +493,9 @@ html, body {
   transform-style: preserve-3d;
   transform: rotateY(var(--ry, 0deg)) rotateX(var(--rx, 0deg)) scale(var(--s, 1));
   animation: floatBobbing var(--float-dur, 3.2s) var(--float-delay, 0s) ease-in-out infinite;
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .ar-envelope.focused .ar-envelope-body {
@@ -509,10 +517,10 @@ html, body {
 }
 
 @keyframes floatBobbing {
-  0%, 100% { translate: 0 0; }
-  25%  { translate: 0 -8px; }
-  50%  { translate: 0 -2px; }
-  75%  { translate: 0 -12px; }
+  0%, 100% { transform: translateY(0); }
+  25%  { transform: translateY(-8px); }
+  50%  { transform: translateY(-2px); }
+  75%  { transform: translateY(-12px); }
 }
 
 @keyframes particleRise {

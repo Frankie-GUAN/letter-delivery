@@ -25,7 +25,9 @@
       "Read(//tmp/**)",
       "Bash(curl -k -s -o /dev/null -w \"Static: HTTP %{http_code}\\\\n\" \"https://localhost:3457/\")",
       "Bash(taskkill //F //IM node.exe)",
-      "Bash(curl -k -s -o /dev/null -w \"Home: HTTP %{http_code}\\\\n\" \"https://localhost:3457/\")"
+      "Bash(curl -k -s -o /dev/null -w \"Home: HTTP %{http_code}\\\\n\" \"https://localhost:3457/\")",
+      "Bash(bash *)",
+      "Bash(npm list *)"
     ]
   }
 }

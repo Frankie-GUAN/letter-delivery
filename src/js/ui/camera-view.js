@@ -104,20 +104,26 @@ const CameraView = {
       this._updateGpsIndicator();
       LocationService.onChange(() => this._updateGpsIndicator());
 
-      // 尝试初始化 Three.js AR
-      if (typeof ARThreeScene !== 'undefined' && ARThreeScene.init) {
-        const ok = ARThreeScene.init(this._container);
-        if (ok) {
-          this._useThreeJS = true;
-          ARThreeScene.setClickHandler((letterId) => {
-            this._handleEnvelopeClick(letterId);
-          });
-          ARThreeScene.startLoop();
-        }
-      }
+      this._initThreeJS();
     } catch (e) {
       console.error('摄像头启动失败:', e);
       this._showCameraError();
+    }
+  },
+
+  _initThreeJS() {
+    if (this._useThreeJS) return;
+    if (typeof ARThreeScene !== 'undefined' && ARThreeScene.init) {
+      const ok = ARThreeScene.init(this._container);
+      if (ok) {
+        this._useThreeJS = true;
+        ARThreeScene.setClickHandler((letterId) => {
+          this._handleEnvelopeClick(letterId);
+        });
+        ARThreeScene.startLoop();
+        this._lastRenderKey = '';
+        this._renderFrame();
+      }
     }
   },
 
@@ -139,6 +145,8 @@ const CameraView = {
         await this._video.play();
         this._updateGpsIndicator();
         LocationService.onChange(() => this._updateGpsIndicator());
+        // 确保 Three.js AR 初始化
+        this._initThreeJS();
       } catch (err) {
         this._showCameraError();
       }

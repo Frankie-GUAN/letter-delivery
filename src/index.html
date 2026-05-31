@@ -6,9 +6,13 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>此刻·此地</title>
-    <link rel="stylesheet" href="./css/animations.css">
-    <link rel="stylesheet" href="./css/components.css">
     <link rel="stylesheet" href="./css/main.css">
+    <link rel="stylesheet" href="./css/animations.css" media="print" onload="this.media='all';this.onload=null;">
+    <link rel="stylesheet" href="./css/components.css" media="print" onload="this.media='all';this.onload=null;">
+    <noscript>
+      <link rel="stylesheet" href="./css/animations.css">
+      <link rel="stylesheet" href="./css/components.css">
+    </noscript>
 </head>
 <body>
     <div id="error-screen" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#faf3e3;color:#3b2e1a;flex-direction:column;align-items:center;justify-content:center;z-index:9999;font-family:'Songti SC','STSong','Noto Serif SC','PMingLiU',serif;text-align:center;padding:20px;">
@@ -20,28 +24,30 @@
         <div id="view-container"></div>
     </div>
 
-    <script src="./js/config.js"></script>
-    <script src="./js/api-key.js"></script>
-    <script src="./js/utils/helpers.js"></script>
-    <script src="./js/data/storage.js"></script>
-    <script src="./js/data/templates.js"></script>
-    <script src="./js/core/location-service.js"></script>
-    <script src="./js/core/feature-engine.js"></script>
-    <script src="./js/core/ai-polish-service.js"></script>
-    <script src="./js/core/api-service.js"></script>
-    <script src="./js/core/sync-service.js"></script>
-    <script src="./js/core/letter-manager.js"></script>
-    <script src="./js/ui/home-view.js"></script>
-    <script src="./js/ui/map-view.js"></script>
-    <script src="./js/ui/camera-view.js"></script>
-    <script src="./js/ui/letter-composer.js"></script>
-    <script src="./js/ui/letter-reader.js"></script>
-    <script src="./js/audio/sound-engine.js"></script>
-    <script src="./js/fx/animation-engine.js"></script>
-    <script src="./js/ar/ar-engine.js"></script>
-    <script src="./js/ui/collection-view.js"></script>
-    <script src="./js/ui/onboarding-view.js"></script>
-    <script src="./js/ui/discover-view.js"></script>
-    <script src="./js/app.js"></script>
+    <script src="./js/config.js" defer></script>
+    <script src="./js/api-key.js" defer></script>
+    <script src="./js/utils/helpers.js" defer></script>
+    <script src="./js/utils/qrcode.js" defer></script>
+    <script src="./js/data/storage.js" defer></script>
+    <script src="./js/data/templates.js" defer></script>
+    <script src="./js/core/location-service.js" defer></script>
+    <script src="./js/core/feature-engine.js" defer></script>
+    <script src="./js/core/ai-polish-service.js" defer></script>
+    <script src="./js/core/api-service.js" defer></script>
+    <script src="./js/core/sync-service.js" defer></script>
+    <script src="./js/core/letter-manager.js" defer></script>
+    <script src="./js/ui/home-view.js" defer></script>
+    <script src="./js/ui/map-view.js" defer></script>
+    <script src="./js/ui/camera-view.js" defer></script>
+    <script src="./js/ui/letter-composer.js" defer></script>
+    <script src="./js/ui/letter-reader.js" defer></script>
+    <script src="./js/audio/sound-engine.js" defer></script>
+    <script src="./js/fx/animation-engine.js" defer></script>
+    <script src="./js/ar/ar-engine.js" defer></script>
+    <script src="./js/fx/ar-three-scene.js" defer></script>
+    <script src="./js/ui/collection-view.js" defer></script>
+    <script src="./js/ui/onboarding-view.js" defer></script>
+    <script src="./js/ui/discover-view.js" defer></script>
+    <script src="./js/app.js" defer></script>
 </body>
 </html>

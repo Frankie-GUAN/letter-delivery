@@ -50,15 +50,17 @@ const DiscoverView = {
     const allLetters = await StorageService.getAllLetters();
     const settings = StorageService.getUserSettings();
 
-    // 排除自己的信 + 已偶遇过的
+    // 排除自己的信 + 已偶遇过的 + 非收信人的密信
     const available = allLetters.filter(l =>
       l.sender.nickname !== settings.nickname &&
-      !this._encounteredIds.includes(l.id)
+      !this._encounteredIds.includes(l.id) &&
+      !(l.type === 'secret' && l.secret && !l.secret.recipients.includes(settings.nickname))
     );
 
-    // 如果没有新信，重置列表
+    // 如果没有新信，重置列表（同样排除非收信人的密信）
     let pool = available.length > 0 ? available : allLetters.filter(l =>
-      l.sender.nickname !== settings.nickname
+      l.sender.nickname !== settings.nickname &&
+      !(l.type === 'secret' && l.secret && !l.secret.recipients.includes(settings.nickname))
     );
 
     if (pool.length === 0) {

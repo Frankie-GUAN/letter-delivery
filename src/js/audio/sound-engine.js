@@ -33,20 +33,6 @@ const SoundEngine = {
     return this._ctx;
   },
 
-  setEnabled(v) {
-    this._enabled = !!v;
-    try { localStorage.setItem('cikecidi_sound_enabled', String(v)); } catch (e) {}
-  },
-
-  isEnabled() { return this._enabled; },
-
-  setVolume(v) {
-    this._volume = Math.max(0, Math.min(1, v));
-    try { localStorage.setItem('cikecidi_sound_volume', String(this._volume)); } catch (e) {}
-  },
-
-  getVolume() { return this._volume; },
-
   // ---- 内部生成器 ----
 
   _createGain(now, volume = 1.0) {
@@ -148,12 +134,6 @@ const SoundEngine = {
   },
 
   // ---- 音效 ----
-
-  // 纸张翻动（棕噪声扫频）
-  playPaperRustle() {
-    if (!this._enabled) return;
-    this._createNoise(0.25, [0.01, 0.24], 1200, 0.3);
-  },
 
   // 相机快门
   playShutter() {
@@ -329,12 +309,6 @@ const SoundEngine = {
     panner.connect(gain);
     source.start(now);
     source.stop(now + duration + 0.05);
-  },
-
-  // 成就解锁和声
-  playAchievement() {
-    if (!this._enabled) return;
-    this._createChime([523, 659, 784], 0.15, 0.08); // C5-E5-G5
   },
 
   // 错误提示

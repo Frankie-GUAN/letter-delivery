@@ -46,6 +46,7 @@ const HomeView = {
               <div class="home-greeting">${this._greeting()}</div>
               <div class="home-nickname">${Helpers.escapeHtml(nickname)}</div>
             </div>
+            <button class="home-share-btn" id="btn-home-share" title="分享 / 扫码打开">📱</button>
           </div>
           <div class="home-title-block">
             <h1 class="home-title">此刻<span class="home-title-sep">·</span>此地</h1>
@@ -240,6 +241,15 @@ const HomeView = {
   },
 
   _bindEvents(container, myLetters) {
+    // 分享/扫码按钮
+    const shareBtn = container.querySelector('#btn-home-share');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', () => {
+        SoundEngine.playUIClick();
+        this._showShareModal();
+      });
+    }
+
     // 探索地图按钮
     container.querySelector('#btn-explore-map').addEventListener('click', () => {
       SoundEngine.playUIClick();
@@ -377,6 +387,47 @@ const HomeView = {
       }
     };
     document.addEventListener('click', this._fabDocClickHandler);
+  },
+
+  _showShareModal() {
+    const url = window.location.origin + window.location.pathname;
+    const qrDataURL = QRCode.render(url, 220);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal-card share-modal">
+        <div class="modal-close" id="modal-close">✕</div>
+        <div class="share-title">📱 扫码打开「此刻·此地」</div>
+        <div class="share-qr-wrap">
+          <img src="${qrDataURL}" alt="QR码" class="share-qr-img">
+        </div>
+        <p class="share-hint">用手机相机扫描二维码即可打开</p>
+        <div class="share-url-row">
+          <input type="text" class="share-url-input" id="share-url-input" value="${url}" readonly>
+          <button class="share-copy-btn" id="btn-copy-url">复制</button>
+        </div>
+        <div class="share-copied-hint" id="share-copied-hint" style="display:none;">✅ 已复制链接</div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const closeModal = () => overlay.remove();
+    overlay.querySelector('#modal-close').addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+
+    overlay.querySelector('#btn-copy-url').addEventListener('click', () => {
+      const input = overlay.querySelector('#share-url-input');
+      input.select();
+      try {
+        navigator.clipboard.writeText(url);
+      } catch (e) {
+        document.execCommand('copy');
+      }
+      const hint = overlay.querySelector('#share-copied-hint');
+      hint.style.display = 'block';
+      setTimeout(() => { hint.style.display = 'none'; }, 2000);
+    });
   },
 
   _setupPullToRefresh(container) {

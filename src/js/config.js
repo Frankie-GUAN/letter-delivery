@@ -23,7 +23,6 @@ const CONFIG = {
     GRID_COLS: 4,                 // 网格列数
     GRID_ROWS: 4,                 // 网格行数
     SOBEL_BINS: 8,                // 边缘方向直方图bin数
-    VECTOR_DIMS: 256,             // 特征向量维度 (4*4*16)
     ALIGNMENT_THRESHOLD: 0.90,    // 对齐成功阈值
   },
 
@@ -32,7 +31,6 @@ const CONFIG = {
     MAX_TITLE_LENGTH: 50,
     MAX_BODY_LENGTH: 2000,
     MAX_REPLY_LENGTH: 500,
-    TYPES: ['public', 'self_capsule', 'secret'],
   },
 
   // 存储
@@ -47,7 +45,6 @@ const CONFIG = {
     SERVER_URL: '',                      // 同源部署，使用相对路径
     INTERVAL: 30000,              // 同步间隔（ms）
     NOTIFY_INTERVAL: 15000,       // 通知检查间隔（ms）
-    NEARBY_RADIUS: 50,            // 服务端搜索半径（米）
   },
 
   // 口令
@@ -66,7 +63,6 @@ Object.freeze(CONFIG.LOCATION);
 Object.freeze(CONFIG.CAMERA);
 Object.freeze(CONFIG.FEATURE);
 Object.freeze(CONFIG.LETTER);
-Object.freeze(CONFIG.LETTER.TYPES);
 Object.freeze(CONFIG.STORAGE);
 Object.freeze(CONFIG.SYNC);
 Object.freeze(CONFIG.PASSPHRASE);

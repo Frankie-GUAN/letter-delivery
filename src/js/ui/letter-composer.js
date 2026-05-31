@@ -142,6 +142,14 @@ const LetterComposer = {
     document.getElementById('capsule-options').style.display = this._currentType === 'self_capsule' ? 'block' : 'none';
     document.getElementById('secret-options').style.display = this._currentType === 'secret' ? 'block' : 'none';
     document.getElementById('public-options').style.display = this._currentType === 'public' ? 'block' : 'none';
+
+    if (this._currentType === 'self_capsule') {
+      const dtInput = document.getElementById('capsule-unlock-time');
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      dtInput.min = now.toISOString().slice(0, 16);
+      if (!dtInput.value) dtInput.value = new Date(Date.now() + 86400000).toISOString().slice(0, 16);
+    }
   },
 
   async _applyAIPolish() {
@@ -259,7 +267,11 @@ const LetterComposer = {
   },
 
   async _sharePassphrase(passphrase, title, recipients) {
-    const text = `🔒 我在「此刻·此地」给你留了一封密信\n📮 「${title}」\n🔑 口令：${passphrase}\n\n打开作品，输入口令即可找到这封信`;
+    const recipientsStr = (recipients && recipients.length > 0)
+      ? `收信人：${recipients.join('、')}`
+      : '给你';
+
+    const text = `🔒 我在「此刻·此地」${recipientsStr}留了一封密信\n📮 「${title}」\n🔑 口令：${passphrase}\n\n打开作品，输入口令即可找到这封信`;
 
     // 尝试 Web Share API
     if (navigator.share) {

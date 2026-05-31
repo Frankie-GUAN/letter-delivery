@@ -84,6 +84,8 @@ const LetterManager = {
         letter.capsule.openedBy.includes(n)
       ) && letter.capsule.openedBy.includes(letter.sender.nickname);
       letter.capsule.allOpened = allOpened;
+    } else {
+      letter.capsule.allOpened = true;
     }
     letter.views++;
     return StorageService.saveLetter(letter);

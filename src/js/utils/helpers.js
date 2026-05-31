@@ -105,9 +105,12 @@ const Helpers = {
     myLetters.forEach(l => (l.replies || []).forEach(r => myReplies.push(r)));
     const gotReplies = myLetters.filter(l => (l.replies || []).some(r => r.nickname !== nickname));
     const locations = new Set(myLetters.map(l => `${l.location.lat.toFixed(3)},${l.location.lng.toFixed(3)}`));
-    const hasSecret = myLetters.some(l => l.type === 'secret');
+    const publicLetters = myLetters.filter(l => l.type === 'public');
+    const secretLetters = myLetters.filter(l => l.type === 'secret');
+    const hasSecret = secretLetters.length > 0;
     const hasCapsule = myLetters.some(l => l.type === 'self_capsule');
     const openedCapsule = myLetters.some(l => l.type === 'self_capsule' && l.capsule && l.capsule.openedBy.length > 0);
+    const replyCount = myLetters.reduce((sum, l) => sum + (l.replies || []).length, 0);
 
     return [
       { id: 'first_letter', name: '初信', icon: '✉️', earned: myLetters.length > 0 },
@@ -118,6 +121,11 @@ const Helpers = {
       { id: 'time_capsuler', name: '时空旅人', icon: '⏳', earned: hasCapsule },
       { id: 'prolific', name: '笔墨丰盈', icon: '📝', earned: myLetters.length >= 5 },
       { id: 'capsule_opener', name: '解锁者', icon: '🔓', earned: openedCapsule },
+      { id: 'public_scribe', name: '公开信使', icon: '📮', earned: publicLetters.length >= 10 },
+      { id: 'explorer', name: '探索者', icon: '🧭', earned: locations.size >= 5 },
+      { id: 'conversation_starter', name: '谈笑风生', icon: '💬', earned: replyCount >= 5 },
+      { id: 'discoverer', name: '发现者', icon: '🔍', earned: discovered.length >= 10 },
+      { id: 'master_of_secrets', name: '密信大师', icon: '🗝️', earned: secretLetters.length >= 3 },
     ];
   },
 
@@ -140,8 +148,54 @@ const Helpers = {
     return days;
   },
 
-  // 随机取数组元素
-  randomFromArray(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
+  // 共享密信口令弹窗（map-view 和 camera-view 共用）
+  showPassphraseModal(letter, { onSuccess }) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal-card passphrase-modal">
+        <div class="modal-close" id="modal-close">✕</div>
+        <div class="passphrase-icon">🔒</div>
+        <h3 class="passphrase-title">这是一封密信</h3>
+        <p class="passphrase-hint">由 ${Helpers.escapeHtml(letter.sender.nickname)} 留给 ${(letter.secret.recipients || ['某人']).join('、')}</p>
+        <div class="passphrase-input-wrap">
+          <input type="text" class="passphrase-input" id="passphrase-input"
+                 maxlength="20" placeholder="输入8位口令..." autocomplete="off">
+          <div class="passphrase-error" id="passphrase-error" style="display:none;"></div>
+        </div>
+        <button class="passphrase-submit" id="btn-passphrase-submit">🔍 寻找这封信</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const close = overlay.querySelector('#modal-close');
+    const input = overlay.querySelector('#passphrase-input');
+    const submit = overlay.querySelector('#btn-passphrase-submit');
+    const errorEl = overlay.querySelector('#passphrase-error');
+
+    const closeModal = () => overlay.remove();
+    close.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+
+    submit.addEventListener('click', () => {
+      const phrase = input.value.trim();
+      if (!phrase) return;
+      if (phrase !== letter.secret.passphrase) {
+        errorEl.textContent = '口令不正确，再试一次';
+        errorEl.style.display = 'block';
+        input.classList.add('error');
+        return;
+      }
+      if (onSuccess) {
+        onSuccess(letter, overlay);
+      } else {
+        overlay.remove();
+      }
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') submit.click();
+    });
+    setTimeout(() => input.focus(), 100);
   },
 };

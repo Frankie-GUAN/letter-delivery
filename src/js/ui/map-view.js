@@ -622,54 +622,11 @@ const MapView = {
       ? Helpers.distanceBetween(this._currentPos.lat, this._currentPos.lng, letter.location.lat, letter.location.lng)
       : '?';
 
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.innerHTML = `
-      <div class="modal-card passphrase-modal">
-        <div class="modal-close" id="modal-close">✕</div>
-        <div class="passphrase-icon">🔒</div>
-        <h3 class="passphrase-title">这是一封密信</h3>
-        <p class="passphrase-hint">由 ${Helpers.escapeHtml(letter.sender.nickname)} 留给 ${(letter.secret.recipients || ['某人']).join('、')}</p>
-        <div class="passphrase-input-wrap">
-          <input type="text" class="passphrase-input" id="passphrase-input"
-                 maxlength="20" placeholder="输入8位口令..." autocomplete="off">
-          <div class="passphrase-error" id="passphrase-error" style="display:none;"></div>
-        </div>
-        <button class="passphrase-submit" id="btn-passphrase-submit">🔍 寻找这封信</button>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-
-    const close = overlay.querySelector('#modal-close');
-    const input = overlay.querySelector('#passphrase-input');
-    const submit = overlay.querySelector('#btn-passphrase-submit');
-    const errorEl = overlay.querySelector('#passphrase-error');
-
-    const closeModal = () => overlay.remove();
-
-    close.addEventListener('click', closeModal);
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) closeModal();
+    Helpers.showPassphraseModal(letter, {
+      onSuccess: (_letter, overlay) => {
+        this._showCluePhoto(letter, d, overlay);
+      },
     });
-
-    submit.addEventListener('click', () => {
-      const phrase = input.value.trim();
-      if (!phrase) return;
-      if (phrase !== letter.secret.passphrase) {
-        errorEl.textContent = '口令不正确，再试一次';
-        errorEl.style.display = 'block';
-        input.classList.add('error');
-        return;
-      }
-      // 口令正确 → 展示线索照片
-      this._showCluePhoto(letter, d, overlay);
-    });
-
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') submit.click();
-    });
-
-    setTimeout(() => input.focus(), 100);
   },
 
   _showCluePhoto(letter, distance, overlay) {

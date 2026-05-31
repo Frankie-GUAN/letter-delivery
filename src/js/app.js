@@ -35,23 +35,32 @@ const App = {
   },
 
   async _startApp() {
-    // 尝试连接后端同步服务
-    const isOnline = await ApiService.checkConnection();
-    if (isOnline) {
-      SyncService.start();
-      SyncService.requestNotificationPermission();
+    // 先渲染首页，让用户尽快看到界面
+    this.navigateTo('home');
 
-      // 注册当前用户
-      const settings = StorageService.getUserSettings();
-      if (settings.nickname) {
-        ApiService.registerNotification(settings.nickname);
+    // 后台异步：尝试连接后端同步服务（不阻塞UI）
+    this._initBackend();
+  },
+
+  async _initBackend() {
+    try {
+      const isOnline = await ApiService.checkConnection();
+      if (isOnline) {
+        SyncService.start();
+        SyncService.requestNotificationPermission();
+
+        // 注册当前用户
+        const settings = StorageService.getUserSettings();
+        if (settings.nickname) {
+          ApiService.registerNotification(settings.nickname);
+        }
       }
+    } catch (e) {
+      // 后端不可用，离线使用
     }
 
     // 检查本地到期时光胶囊
     this._checkLocalCapsules();
-
-    this.navigateTo('home');
   },
 
   async _checkLocalCapsules() {

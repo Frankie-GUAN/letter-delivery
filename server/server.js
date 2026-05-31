@@ -54,7 +54,7 @@ app.get('/api/letters/nearby', (req, res) => {
     const now = Date.now();
 
     const nearby = letters.filter(l => {
-      if (l.type === 'self_capsule' && l.capsule && now < l.capsule.unlockAt) {
+      if (l.type === 'self_capsule' && l.capsule && now > l.capsule.unlockAt + 7 * 86400000) {
         return false;
       }
       const d = haversine(userLat, userLng, l.location.lat, l.location.lng);

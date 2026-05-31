@@ -353,7 +353,8 @@ const CameraView = {
       const allNearby = await StorageService.getNearbyLetters(pos.lat, pos.lng);
       const now = Date.now();
       this._nearbyLetters = allNearby.filter(l => {
-        if (l.type === 'self_capsule' && l.capsule && now < l.capsule.unlockAt) return false;
+        // 过期胶囊才过滤（超过解锁时间后7天自动消失）
+        if (l.type === 'self_capsule' && l.capsule && now > l.capsule.unlockAt + 7 * 86400000) return false;
         return true;
       });
     } catch (e) {
@@ -622,12 +623,19 @@ const CameraView = {
 
         const letter = r.letter;
 
+        // 检查时光胶囊是否已解锁
+        if (letter.type === 'self_capsule' && letter.capsule && Date.now() < letter.capsule.unlockAt) {
+          const remaining = Math.round((letter.capsule.unlockAt - Date.now()) / 86400000);
+          this._showCapsuleLockedHint(letter, remaining);
+          return;
+        }
+
         if (letter.type === 'secret') {
           this._showSecretModal(letter);
           return;
         }
 
-        if (letter.photo.hasAlignment && alignment < 90) {
+        if (letter.photo.hasAlignment && alignment < CONFIG.FEATURE.ALIGNMENT_THRESHOLD * 100) {
           this._targetLetter = letter;
           return;
         }
@@ -637,53 +645,35 @@ const CameraView = {
     });
   },
 
+  // ---- 胶囊锁定提示 ----
+
+  _showCapsuleLockedHint(letter, daysRemaining) {
+    const arLayer = document.getElementById('camera-ar-layer');
+    if (!arLayer) return;
+    const existing = arLayer.querySelector('.capsule-locked-hint');
+    if (existing) existing.remove();
+    const hint = document.createElement('div');
+    hint.className = 'capsule-locked-hint';
+    hint.innerHTML = `<span>⏳</span><span>${daysRemaining > 0 ? `${daysRemaining}天后解锁` : '即将解锁'}</span>`;
+    hint.style.cssText = `
+      position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+      background: rgba(26,24,21,0.85); color: #d4a853; padding: 10px 20px;
+      border-radius: 20px; font-size: 14px; z-index: 25; pointer-events: none;
+      border: 1px solid rgba(212,168,83,0.4); text-align: center;
+    `;
+    arLayer.appendChild(hint);
+    setTimeout(() => hint.remove(), 2500);
+  },
+
   // ---- 密信弹窗 ----
 
   _showSecretModal(letter) {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.innerHTML = `
-      <div class="modal-card passphrase-modal">
-        <div class="modal-close" id="modal-close">✕</div>
-        <div class="passphrase-icon">🔒</div>
-        <h3 class="passphrase-title">这是一封密信</h3>
-        <p class="passphrase-hint">由 ${Helpers.escapeHtml(letter.sender.nickname)} 留给 ${(letter.secret.recipients || ['某人']).join('、')}</p>
-        <div class="passphrase-input-wrap">
-          <input type="text" class="passphrase-input" id="passphrase-input"
-                 maxlength="20" placeholder="输入8位口令..." autocomplete="off">
-          <div class="passphrase-error" id="passphrase-error" style="display:none;"></div>
-        </div>
-        <button class="passphrase-submit" id="btn-passphrase-submit">🔍 寻找这封信</button>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-
-    const close = overlay.querySelector('#modal-close');
-    const input = overlay.querySelector('#passphrase-input');
-    const submit = overlay.querySelector('#btn-passphrase-submit');
-    const errorEl = overlay.querySelector('#passphrase-error');
-
-    const closeModal = () => overlay.remove();
-    close.addEventListener('click', closeModal);
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
-
-    submit.addEventListener('click', () => {
-      const phrase = input.value.trim();
-      if (!phrase) return;
-      if (phrase !== letter.secret.passphrase) {
-        errorEl.textContent = '口令不正确，再试一次';
-        errorEl.style.display = 'block';
-        input.classList.add('error');
-        return;
-      }
-      overlay.remove();
-      this._openLetter(letter);
+    Helpers.showPassphraseModal(letter, {
+      onSuccess: (_letter, overlay) => {
+        overlay.remove();
+        this._openLetter(letter);
+      },
     });
-
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') submit.click();
-    });
-    setTimeout(() => input.focus(), 100);
   },
 
   // ---- 打开信件 ----

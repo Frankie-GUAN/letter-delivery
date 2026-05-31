@@ -96,11 +96,6 @@ const Helpers = {
     }
   },
 
-  hideError() {
-    const el = document.getElementById('error-screen');
-    if (el) el.style.display = 'none';
-  },
-
   // 计算用户成就
   getAchievements(allLetters, nickname) {
     if (!nickname) return [];
@@ -151,11 +146,6 @@ const Helpers = {
       });
     }
     return days;
-  },
-
-  // 随机取数组元素
-  randomFromArray(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
   },
 
   // 共享密信口令弹窗（map-view 和 camera-view 共用）

@@ -133,11 +133,6 @@ html, body {
   pointer-events: none;
 }
 
-.map-placeholder {
-  text-align: center;
-  color: var(--text-dim);
-}
-
 .map-status-icon {
   font-size: 48px;
   margin-top: 12px;
@@ -1649,60 +1644,6 @@ html, body {
 .clue-distance {
   font-size: 14px;
   color: var(--text);
-}
-
-/* ========== 相机距离指示 ========== */
-
-.ar-distance-hint {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  pointer-events: none;
-}
-
-.ar-far-icon {
-  font-size: 40px;
-  margin-bottom: 12px;
-  opacity: 0.7;
-}
-
-.ar-far-text {
-  font-size: 18px;
-  color: var(--text);
-  margin-bottom: 6px;
-}
-
-.ar-far-sub {
-  font-size: 13px;
-  color: var(--text-dim);
-}
-
-.ar-distance-hint.nearby {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.ar-nearby-dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--accent);
-  animation: nearbyPulse 1.5s ease-in-out infinite;
-}
-
-@keyframes nearbyPulse {
-  0%, 100% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.8); opacity: 1; }
-}
-
-.ar-nearby-text {
-  font-size: 16px;
-  color: var(--accent);
-  font-weight: 500;
 }
 
 /* ========== 折叠信件选择器 ========== */

@@ -711,14 +711,6 @@ const CameraView = {
     return (bearing + 360) % 360;
   },
 
-  _headingDiff(letterBearing) {
-    const heading = this._getHeading();
-    let diff = letterBearing - heading;
-    while (diff > 180) diff -= 360;
-    while (diff < -180) diff += 360;
-    return diff;
-  },
-
   _updateAlignmentUI(percent) {
     const fill = document.getElementById('alignment-fill');
     const label = document.getElementById('alignment-percent');

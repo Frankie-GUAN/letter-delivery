@@ -99,33 +99,6 @@ const LEditorTemplates = {
     },
   },
 
-  generate(inputText, mood = '温柔') {
-    const t = this.templates[mood] || this.templates['温柔'];
-    const opening = t.openings[Math.floor(Math.random() * t.openings.length)];
-    const body = t.bodies[Math.floor(Math.random() * t.bodies.length)];
-    const closing = t.closings[Math.floor(Math.random() * t.closings.length)];
-
-    const vars = {
-      feeling: inputText || '那一刻的感觉',
-      weather: ['晴天', '雨天', '阴天', '起风了'][Math.floor(Math.random() * 4)],
-      place: '这里',
-      reason: '缘分',
-      time_of_day: ['黄昏', '清晨', '午后', '傍晚'][Math.floor(Math.random() * 4)],
-      time_ago: '很久以前',
-      memory: '那些日子',
-      goal: '那些梦想',
-      time_later: '一年',
-      adjective: '更好',
-    };
-
-    let result = `${opening}\n\n${body}\n\n${closing}`;
-    Object.keys(vars).forEach(key => {
-      result = result.replace(`{${key}}`, vars[key]);
-    });
-
-    return result;
-  },
-
   wrap(inputText, mood = '温柔') {
     const t = this.templates[mood] || this.templates['温柔'];
     const opening = t.openings[Math.floor(Math.random() * t.openings.length)];

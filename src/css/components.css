@@ -2,33 +2,6 @@
    此刻·此地 — 共享组件样式
    ================================================================ */
 
-/* ---- 暖光卡片（毛边纸质感） ---- */
-.deckle-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow:
-    0 1px 3px rgba(59,46,26,0.04),
-    0 4px 16px rgba(59,46,26,0.06),
-    inset 0 1px 0 rgba(255,255,255,0.5);
-  transition: all 0.25s;
-}
-
-.deckle-card:hover {
-  box-shadow:
-    0 2px 6px rgba(59,46,26,0.06),
-    0 8px 24px rgba(59,46,26,0.1),
-    inset 0 1px 0 rgba(255,255,255,0.5);
-  transform: translateY(-1px);
-}
-
-.deckle-card:active {
-  transform: translateY(0);
-  box-shadow:
-    0 1px 2px rgba(59,46,26,0.04),
-    inset 0 1px 0 rgba(255,255,255,0.5);
-}
-
 /* ---- 火漆印章（类型徽章） ---- */
 .seal-badge {
   display: inline-flex;
@@ -159,10 +132,6 @@
   flex-direction: column-reverse;
   align-items: flex-end;
   gap: 12px;
-}
-
-body.has-safe-bottom .fab-container {
-  bottom: calc(24px + env(safe-area-inset-bottom));
 }
 
 .fab-primary {
@@ -306,14 +275,6 @@ body.has-safe-bottom .fab-container {
 .heatmap-dot.level-3 { background: rgba(196,133,42,0.65); }
 .heatmap-dot.level-4 { background: rgba(196,133,42,0.85); }
 
-/* ---- 暖色分隔线 ---- */
-.warm-divider {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--border), transparent);
-  margin: 16px 0;
-  border: none;
-}
-
 /* ---- 暗角叠加层 ---- */
 .vignette-overlay {
   position: fixed;
@@ -347,31 +308,3 @@ body.has-safe-bottom .fab-container {
   animation: inkBloom 2s ease-out forwards;
 }
 
-/* ---- 卡片交互反馈 ---- */
-.interactive-card {
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.interactive-card:active {
-  transform: scale(0.975);
-  filter: brightness(0.96);
-}
-
-/* ---- Toast 通知 ---- */
-.toast {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 12px 24px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  box-shadow: 0 4px 20px rgba(59,46,26,0.15);
-  font-size: 14px;
-  color: var(--text);
-  z-index: 10001;
-  animation: slideDown 0.3s ease, fadeOut 0.3s 2.5s ease forwards;
-  backdrop-filter: blur(10px);
-}

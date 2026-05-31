@@ -55,6 +55,8 @@
       "Bash(radius=1 2>&1)",
       "Bash(curl -s http://127.0.0.1:3000/api/letters/nearby?lat=0)",
       "Bash(curl *)",
+      "Bash(bash *)",
+      "Bash(npm list *)",
       "WebSearch",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:plugins.trac.wordpress.org)",

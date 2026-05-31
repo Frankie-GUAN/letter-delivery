@@ -1,0 +1,36 @@
+<h2>✅ 排版修复完成 — 修改摘要</h2>
+<p class="subtitle">共 8 项修复，涉及 main.css 和 index.html</p>
+
+<div class="section">
+  <h3>1. 字体栈 → 文学衬线</h3>
+  <div class="pros-cons">
+    <div class="cons"><h4>修复前</h4><ul><li>-apple-system, PingFang SC, Microsoft YaHei</li></ul></div>
+    <div class="pros"><h4>修复后</h4><ul><li>Songti SC → STSong → Noto Serif SC → PMingLiU → serif</li><li>新增 --font-display 变量用于大标题</li></ul></div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>2. 标题居中 hack 移除</h3>
+  <div class="pros-cons">
+    <div class="cons"><h4>修复前</h4><ul><li>.home-title: letter-spacing:8px + text-indent:8px</li><li>.ob-title-main: letter-spacing:12px + text-indent:12px</li></ul></div>
+    <div class="pros"><h4>修复后</h4><ul><li>.home-title: letter-spacing:4px, font-weight:400</li><li>.ob-title-main: letter-spacing:6px, font-weight:400</li><li>均使用 text-align:center 自然居中</li></ul></div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>3. 顶栏精确居中</h3>
+  <div class="pros-cons">
+    <div class="cons"><h4>修复前</h4><ul><li>margin-right: 40px 魔法数字补偿</li></ul></div>
+    <div class="pros"><h4>修复后</h4><ul><li>position: absolute + left:50% + translateX(-50%)</li><li>适配任何屏幕宽度</li></ul></div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>4-8. 其他修复</h3>
+  <ul>
+    <li><strong>错误页字体</strong>: sans-serif → 品牌衬线字体</li>
+    <li><strong>间距统一</strong>: collection-view padding 16px → 20px</li>
+    <li><strong>字重修复</strong>: 统计数据 300 → 400</li>
+    <li><strong>行高系统</strong>: reader 2.0→1.9, discover 1.7→1.8, ob-step 2.0→1.8</li>
+  </ul>
+</div>

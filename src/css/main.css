@@ -20,7 +20,8 @@
   --radius: 12px;
   --radius-lg: 14px;
   --shadow: 0 2px 16px rgba(59,46,26,0.06);
-  --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", serif;
+  --font: "Songti SC", "STSong", "Noto Serif SC", "Source Han Serif SC", "PMingLiU", "SimSun", serif;
+  --font-display: "Songti SC", "STSong", "Noto Serif SC", serif;
 }
 
 html, body {
@@ -984,6 +985,7 @@ html, body {
   padding-top: max(16px, env(safe-area-inset-top));
   background: var(--surface);
   border-bottom: 1px solid rgba(59,46,26,0.06);
+  position: relative;
 }
 
 .composer-back-btn {
@@ -993,14 +995,16 @@ html, body {
   font-size: 15px;
   cursor: pointer;
   padding: 4px 0;
+  z-index: 1;
 }
 
 .composer-title {
-  flex: 1;
-  text-align: center;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   font-size: 17px;
   font-weight: 600;
-  margin-right: 40px;
+  white-space: nowrap;
 }
 
 .composer-body {
@@ -1185,6 +1189,7 @@ html, body {
   padding-top: max(16px, env(safe-area-inset-top));
   background: var(--surface);
   border-bottom: 1px solid rgba(59,46,26,0.06);
+  position: relative;
 }
 
 .reader-back-btn {
@@ -1193,6 +1198,7 @@ html, body {
   color: var(--accent);
   font-size: 15px;
   cursor: pointer;
+  z-index: 1;
 }
 
 .reader-delete-btn {
@@ -1204,6 +1210,7 @@ html, body {
   margin-left: auto;
   padding: 4px 8px;
   transition: all 0.2s;
+  z-index: 1;
 }
 
 .reader-delete-btn:active {
@@ -1212,11 +1219,12 @@ html, body {
 }
 
 .reader-type-badge {
-  flex: 1;
-  text-align: center;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   font-size: 13px;
   color: var(--text-dim);
-  margin-right: 40px;
+  white-space: nowrap;
 }
 
 .reader-body {
@@ -1278,7 +1286,7 @@ html, body {
 
 .reader-body-text {
   font-size: 16px;
-  line-height: 2;
+  line-height: 1.9;
   white-space: pre-wrap;
 }
 
@@ -1923,11 +1931,10 @@ html, body {
 
 .home-title {
   font-size: 36px;
-  font-weight: 300;
+  font-weight: 400;
   color: var(--text);
-  margin: 0;
-  letter-spacing: 8px;
-  text-indent: 8px;
+  margin: 0 0 4px;
+  letter-spacing: 4px;
 }
 
 .home-title-sep {
@@ -1971,7 +1978,7 @@ html, body {
 
 .home-stat-num {
   font-size: 28px;
-  font-weight: 300;
+  font-weight: 400;
   color: var(--accent);
   line-height: 1;
   margin-bottom: 6px;
@@ -2362,7 +2369,7 @@ html, body {
   width: 100%;
   height: 100%;
   overflow-y: auto;
-  padding: 0 16px;
+  padding: 0 20px;
   position: relative;
   background:
     radial-gradient(ellipse at 50% 0%, rgba(196,133,42,0.04) 0%, transparent 50%),
@@ -2569,11 +2576,10 @@ html, body {
 
 .ob-title-main {
   font-size: 40px;
-  font-weight: 300;
+  font-weight: 400;
   color: var(--text);
   margin: 0 0 16px;
-  letter-spacing: 12px;
-  text-indent: 12px;
+  letter-spacing: 6px;
 }
 
 .ob-title-char {
@@ -2624,7 +2630,7 @@ html, body {
 .ob-step-desc {
   font-size: 15px;
   color: var(--text-dim);
-  line-height: 2;
+  line-height: 1.8;
   margin: 0 0 24px;
 }
 
@@ -2836,7 +2842,7 @@ html, body {
 .discover-card-preview {
   font-size: 14px;
   color: var(--text-dim);
-  line-height: 1.7;
+  line-height: 1.8;
   margin: 0 0 14px;
 }
 

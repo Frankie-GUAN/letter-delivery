@@ -1,0 +1,89 @@
+<h2>排版问题诊断 — 「此刻·此地」首页</h2>
+<p class="subtitle">以下是不符合「旧物诗学」审美的 8 个具体排版问题</p>
+
+<div class="section">
+  <h3>🔴 问题 1：字体缺乏个性</h3>
+  <p>当前使用系统默认字体栈 <code>-apple-system, PingFang SC, Microsoft YaHei</code>，完全没有品牌辨识度。作为一本"诗学信笺"应用，需要温暖的文学气质字体。</p>
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">当前：系统默认字体</div>
+      <div class="mockup-body" style="font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', serif; padding: 20px;">
+        <h3 style="font-weight:300;letter-spacing:6px;">此刻·此地</h3>
+        <p style="color:#8c7b5e;font-size:13px;">用相机在真实世界留下和发现信件</p>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">修复：文学气质字体</div>
+      <div class="mockup-body" style="font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'Songti SC', serif; padding: 20px;">
+        <h3 style="font-weight:400;letter-spacing:4px;">此刻·此地</h3>
+        <p style="color:#8c7b5e;font-size:13px;font-style:italic;">用相机在真实世界留下和发现信件</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🔴 问题 2：标题居中 Hack</h3>
+  <p><code>letter-spacing: 8px; text-indent: 8px;</code> 通过缩进补偿字母间距来模拟居中，这会在不同字符宽度下偏移。</p>
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">当前：text-indent hack（实际偏右）</div>
+      <div class="mockup-body" style="text-align:center;padding:20px;">
+        <div style="font-size:36px;font-weight:300;letter-spacing:8px;text-indent:8px;">此刻·此地</div>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">修复：text-align + 合理 letter-spacing</div>
+      <div class="mockup-body" style="text-align:center;padding:20px;">
+        <div style="font-size:36px;font-weight:400;letter-spacing:6px;">此刻·此地</div>
+        <div style="font-size:12px;color:#8c7b5e;margin-top:4px;letter-spacing:2px;">MOMENT · PLACE</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🔴 问题 3：顶栏 margin-right: 40px 魔法数字</h3>
+  <p>写信页和读信页的标题用固定 margin 补偿左侧"返回"按钮来居中，换设备就偏了。</p>
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">当前：margin-right: 40px</div>
+      <div class="mockup-body" style="display:flex;align-items:center;padding:12px;gap:12px;border:1px solid #ddd;">
+        <button style="border:none;background:none;color:#c4852a;">← 返回</button>
+        <span style="flex:1;text-align:center;margin-right:40px;">写一封信</span>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">修复：绝对定位居中（flexible）</div>
+      <div class="mockup-body" style="display:flex;align-items:center;padding:12px;position:relative;border:1px solid #ddd;">
+        <button style="border:none;background:none;color:#c4852a;z-index:1;">← 返回</button>
+        <span style="position:absolute;left:50%;transform:translateX(-50%);">写一封信</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🔴 问题 4：Setup 初始化界面使用 sans-serif</h3>
+  <p>错误页面写了 <code>font-family: sans-serif</code>，与品牌字体脱节。</p>
+</div>
+
+<div class="section">
+  <h3>🟡 问题 5：视图间距不一致</h3>
+  <p>Home 用 <code>padding: 0 20px</code>，Collection/Discover 用 <code>padding: 0 16px</code>，缺乏统一节奏。</p>
+</div>
+
+<div class="section">
+  <h3>🟡 问题 6：行高系统混乱</h3>
+  <p>正文 line-height 在 1.6 / 1.8 / 2.0 之间跳跃，缺乏层级感。建议建立 <code>1.5 → 正文, 1.8 → 书信, 2.0 → 诗句</code> 的节奏体系。</p>
+</div>
+
+<div class="section">
+  <h3>🟡 问题 7：标题字重未分层</h3>
+  <p>标题使用 font-weight 300（轻飘飘），正文用 500-600（反而更粗），形成"正文比标题重"的颠倒感。</p>
+</div>
+
+<div class="section">
+  <h3>🟡 问题 8：letter-spacing 过大</h3>
+  <p>onboarding 标题使用 <code>letter-spacing: 12px</code>，中文字间距 12px 会产生视觉断裂。</p>
+</div>

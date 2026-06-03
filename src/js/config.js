@@ -57,6 +57,12 @@ const CONFIG = {
   ERROR_TEXT: '哎呀，出错了，请重启试试吧~',
 };
 
+// ── 共享常量（避免多文件重复） ──
+CONFIG.AVATARS = ['🌲', '🐱', '🐶', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🐸', '🦁', '🐙', '🌸', '🌟', '🌈', '💎', '🎈', '🎵', '📚', '☕'];
+CONFIG.LETTER_TYPE_ICONS = { public: '📮', self_capsule: '⏳', secret: '🔒' };
+CONFIG.LETTER_TYPE_LABELS = { public: '公开', self_capsule: '给自己', secret: '密信' };
+CONFIG.LETTER_MOODS = ['温柔', '俏皮', '深情', '怀念', '期待', '感谢'];
+
 // 冻结防止意外修改
 Object.freeze(CONFIG);
 Object.freeze(CONFIG.LOCATION);

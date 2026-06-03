@@ -2359,6 +2359,37 @@ html, body {
   height: max(40px, env(safe-area-inset-bottom, 20px));
 }
 
+/* ══════════════════════════════════════════════
+   响应式 — 小屏适配 (≤375px)
+   ══════════════════════════════════════════════ */
+@media (max-width: 375px) {
+  .home-title { font-size: 28px; letter-spacing: 3px; }
+  .home-stat-num { font-size: 22px; }
+  .home-stat-label { font-size: 10px; }
+  .home-stat-card { padding: 12px 8px; }
+  .home-stats-row { gap: 6px; }
+
+  .collection-grid { grid-template-columns: 1fr; gap: 8px; }
+  .envelope-card { padding: 12px; }
+  .env-card-title { font-size: 13px; }
+
+  .reader-photo { width: 160px; height: 160px; }
+  .reader-title { font-size: 20px; }
+
+  .setup-avatar-grid { grid-template-columns: repeat(4, 1fr); }
+  .setup-avatar-btn { width: 44px; height: 44px; font-size: 20px; }
+
+  .camera-alignment-bar { bottom: 100px; }
+  .map-filter-btn { padding: 4px 12px; font-size: 12px; }
+}
+
+/* ── 小屏横屏优化 ── */
+@media (max-width: 375px) and (orientation: landscape) {
+  .camera-alignment-bar { bottom: 60px; }
+  .camera-bottom-bar { padding: 10px 16px; }
+  .camera-btn { padding: 10px; font-size: 13px; }
+}
+
 /* 下拉刷新 */
 .home-refresh-indicator {
   position: sticky;

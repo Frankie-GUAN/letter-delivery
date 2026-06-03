@@ -104,7 +104,7 @@ const Helpers = {
     const myReplies = [];
     myLetters.forEach(l => (l.replies || []).forEach(r => myReplies.push(r)));
     const gotReplies = myLetters.filter(l => (l.replies || []).some(r => r.nickname !== nickname));
-    const locations = new Set(myLetters.map(l => `${l.location.lat.toFixed(3)},${l.location.lng.toFixed(3)}`));
+    const locations = new Set(myLetters.filter(l => l.location).map(l => `${l.location.lat.toFixed(3)},${l.location.lng.toFixed(3)}`));
     const publicLetters = myLetters.filter(l => l.type === 'public');
     const secretLetters = myLetters.filter(l => l.type === 'secret');
     const hasSecret = secretLetters.length > 0;

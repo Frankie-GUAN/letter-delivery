@@ -145,8 +145,7 @@ const LetterReader = {
 
   _bindEvents(container) {
     container.querySelector('#btn-reader-back').addEventListener('click', () => {
-      const prev = App.getPreviousView();
-      App.navigateTo(prev || 'map');
+      App.goBack('map');
     });
 
     // 删除信件

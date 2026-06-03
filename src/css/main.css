@@ -39,6 +39,33 @@ html, body {
   touch-action: manipulation;
 }
 
+#error-screen {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  font-family: var(--font);
+  text-align: center;
+  padding: 20px;
+}
+
+.error-screen-icon {
+  font-size: 64px;
+  margin-bottom: 24px;
+}
+
+.error-screen-text {
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--text);
+}
+
 #app, #view-container {
   width: 100%;
   height: 100%;
@@ -2258,6 +2285,74 @@ html, body {
   margin: 0 0 20px;
 }
 
+.home-refresh-text {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.home-letter-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.home-explore-text {
+  flex: 1;
+}
+
+/* ---- 读信回响列表 ---- */
+.replies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sender-avatar {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.sender-name {
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.sender-time {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* ---- 胶囊锁定提示 ---- */
+.capsule-locked-hint {
+  text-align: center;
+  font-size: 18px;
+  color: var(--text-dim);
+  padding: 40px 20px 20px;
+}
+
+.reader-locked-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  padding: 0 20px;
+}
+
+.reader-open-camera {
+  padding: 10px 24px;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 24px;
+  font-size: 15px;
+  cursor: pointer;
+  font-family: var(--font);
+  font-weight: 500;
+}
+
+.reader-open-camera:active {
+  transform: scale(0.97);
+}
+
 /* ---- 底部安全区 ---- */
 
 .home-bottom-spacer {
@@ -2416,22 +2511,6 @@ html, body {
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   padding-bottom: 20px;
-}
-
-.envelope-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
-  overflow: hidden;
-}
-
-.envelope-card:active {
-  transform: scale(0.96);
-  background: var(--bg-alt);
 }
 
 .env-card-top {
@@ -2689,6 +2768,37 @@ html, body {
   align-items: center;
   gap: 16px;
   width: 100%;
+}
+
+.ob-nav-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 340px;
+}
+
+.ob-nav-btn {
+  background: none;
+  border: 1px solid rgba(59,46,26,0.12);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ob-back-btn {
+  color: var(--text-dim);
+}
+
+.ob-skip-btn {
+  color: var(--accent);
+  border-color: rgba(196,133,42,0.2);
+}
+
+.ob-nav-btn:active {
+  background: rgba(196,133,42,0.08);
 }
 
 .ob-next-btn {

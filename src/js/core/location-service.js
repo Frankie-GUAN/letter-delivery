@@ -82,6 +82,10 @@ const LocationService = {
     this._listeners.push(fn);
   },
 
+  offChange(fn) {
+    this._listeners = this._listeners.filter(function(l) { return l !== fn; });
+  },
+
   _notifyListeners() {
     const pos = this.getCurrent();
     this._listeners.forEach(fn => {

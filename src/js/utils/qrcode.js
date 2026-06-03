@@ -335,13 +335,6 @@ const QRCode = {
   },
 
   _placeFormatInfo(matrix, mask) {
-    // EC Level M (00), mask pattern
-    const data = ((0 << 1) | mask) ^ 0x5412; // BCH encoded
-    let bits = data;
-    for (let i = 0; i < 15; i++) {
-      const v = (bits >> (14 - i)) & 1;
-      // 格式信息位置（简化版：只放置关键位）
-    }
     // 使用预计算的格式信息
     const formatBits = [
       0x77c4, 0x72f3, 0x7daa, 0x789d, 0x662f, 0x6318, 0x6c41, 0x6976,

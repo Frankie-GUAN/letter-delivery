@@ -21,6 +21,12 @@ const MapView = {
         return;
       }
 
+      if (typeof API_KEYS === 'undefined' || !API_KEYS || !API_KEYS.AMAP_KEY || !API_KEYS.AMAP_SECURITY_CODE) {
+        this._loadingPromise = null;
+        reject(new Error('高德地图密钥未配置'));
+        return;
+      }
+
       // 设置安全密钥（必须在加载SDK前）
       window._AMapSecurityConfig = {
         securityJsCode: API_KEYS.AMAP_SECURITY_CODE,

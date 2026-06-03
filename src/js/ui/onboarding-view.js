@@ -39,6 +39,12 @@ const OnboardingView = {
               <div class="dot-indicator ${i === this._step ? 'active' : ''} ${i < this._step ? 'done' : ''}"></div>
             `).join('')}
           </div>
+          <div class="ob-nav-row">
+            ${this._step > 0 ? '<button class="ob-nav-btn ob-back-btn" id="btn-ob-back">← 上一步</button>' : '<span></span>'}
+            ${this._step < 3 ? `
+              <button class="ob-nav-btn ob-skip-btn" id="btn-ob-skip">跳过 ›</button>
+            ` : ''}
+          </div>
           ${this._step < 3 ? `
             <button class="ob-next-btn" id="btn-ob-next">
               ${this._step === 0 ? '开始探索 →' : '下一步 →'}
@@ -55,10 +61,32 @@ const OnboardingView = {
         SoundEngine.playPageTurn();
         this._step++;
         this._renderStep(container);
-        // 滑动动画
         const stepsEl = container.querySelector('#ob-steps-container');
         if (stepsEl) {
           stepsEl.style.animation = 'slideInRight 0.35s ease forwards';
+        }
+      });
+      // 跳过按钮 — 直接进入首页
+      const skipBtn = container.querySelector('#btn-ob-skip');
+      if (skipBtn) {
+        skipBtn.addEventListener('click', () => {
+          StorageService.saveUserSettings({ nickname: '旅人', avatar: '🌲' });
+          SoundEngine.playPageTurn();
+          App._startApp();
+        });
+      }
+    }
+
+    // 回退按钮
+    const backBtn = container.querySelector('#btn-ob-back');
+    if (backBtn) {
+      backBtn.addEventListener('click', () => {
+        SoundEngine.playPageTurn();
+        this._step = Math.max(0, this._step - 1);
+        this._renderStep(container);
+        const stepsEl = container.querySelector('#ob-steps-container');
+        if (stepsEl) {
+          stepsEl.style.animation = 'slideInLeft 0.35s ease forwards';
         }
       });
     }

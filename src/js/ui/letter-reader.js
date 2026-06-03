@@ -17,6 +17,38 @@ const LetterReader = {
     }
 
     const letter = this._letter;
+    const settings = StorageService.getUserSettings();
+    const isMine = letter.sender.nickname === settings.nickname;
+
+    if (letter.type === 'self_capsule' && letter.capsule) {
+      if (Date.now() < letter.capsule.unlockAt) {
+        container.innerHTML = `
+          <div class="reader-empty">
+            <div class="capsule-locked-hint">⏳ ${Helpers.formatDate(letter.capsule.unlockAt)} 后解锁</div>
+            <button class="reader-back-btn" id="btn-reader-back">＜ 返回</button>
+          </div>
+        `;
+        container.querySelector('#btn-reader-back').addEventListener('click', () => App.goBack('map'));
+        return;
+      }
+      if (letter.photo.hasAlignment) {
+        container.innerHTML = `
+          <div class="reader-empty">
+            <div class="capsule-locked-hint">📷 需要回到原地对齐后才能打开</div>
+            <div class="reader-locked-actions">
+              <button class="reader-back-btn" id="btn-reader-back">＜ 返回</button>
+              <button class="reader-open-camera" id="btn-reader-align">打开相机</button>
+            </div>
+          </div>
+        `;
+        container.querySelector('#btn-reader-back').addEventListener('click', () => App.goBack('map'));
+        container.querySelector('#btn-reader-align').addEventListener('click', () => {
+          App.navigateTo('camera', { targetLetterId: letter.id });
+        });
+        return;
+      }
+    }
+
     SoundEngine.playOpenLetter();
 
     // 如果是时光胶囊，标记当前用户已打开
@@ -38,8 +70,7 @@ const LetterReader = {
         `).join('')
       : '<div class="reader-no-replies">还没有回响，做第一个吧。</div>';
 
-    const settings = StorageService.getUserSettings();
-    const isMine = letter.sender.nickname === settings.nickname;
+    // isMine 已在上方计算
 
     const typeBadge = {
       public: '📮 公开信',

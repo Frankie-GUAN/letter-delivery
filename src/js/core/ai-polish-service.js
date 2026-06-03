@@ -36,7 +36,7 @@ ${inputText}
 
   // 调用DeepSeek API进行润色
   async polish(inputText, mood = '温柔') {
-    if (!API_KEYS || !API_KEYS.DEEPSEEK) {
+    if (typeof API_KEYS === 'undefined' || !API_KEYS || !API_KEYS.DEEPSEEK) {
       console.warn('DeepSeek API密钥未配置，降级使用本地模板');
       return null;
     }

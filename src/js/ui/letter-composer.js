@@ -247,7 +247,7 @@ const LetterComposer = {
       }
 
       if (letter.type === 'secret') {
-        this._sharePassphrase(letter.secret.passphrase, letter.content.title, recipients);
+        await this._sharePassphrase(letter.secret.passphrase, letter.content.title, recipients);
       }
 
       SoundEngine.playSendLetter();
